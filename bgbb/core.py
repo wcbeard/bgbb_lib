@@ -6,9 +6,9 @@ from numpy import exp
 import pandas as pd
 from lifetimes import BetaGeoBetaBinomFitter
 
-from wrappers import frt, Rfn, to_abgd_od
-from bgbb_likelihood import nb_loglikelihood
-from numba_special import p_alive_exp_p1_p2, cond_exp_rets_till_p2345
+from bgbb.wrappers import frt, Rfn, to_abgd_od
+from bgbb.bgbb_likelihood import nb_loglikelihood
+from bgbb.numba_special import p_alive_exp_p1_p2, cond_exp_rets_till_p2345
 
 
 def as_array(s: Union[np.array, pd.Series]):
