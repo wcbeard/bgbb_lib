@@ -3,7 +3,7 @@ from typing import List
 
 import pandas as pd
 
-from bgbb_cli.sql_utils_tests import test_ho_range, test_model_range, test_rft
+from sql.sql_utils_tests import test_ho_range, test_model_range, test_rft
 
 
 def to_s3_fmt(date): return date.strftime('%Y%m%d')
