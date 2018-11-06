@@ -172,6 +172,7 @@ def mk_rec_freq_q(
 
 
 def run_rec_freq_spk(
+    spark,
     rfn_base_query=base_query,
     HO_WIN=14,
     MODEL_WIN=90,
@@ -179,7 +180,6 @@ def run_rec_freq_spk(
     sample_ids="'1'",
     ho_start="2018-08-01",
     ho_days_in_future=None,
-    spark=None,
 ):
     """
     holdout: whether to pull # of returns in holdout period. Useful
@@ -187,7 +187,6 @@ def run_rec_freq_spk(
     ho_days_in_future: int?; if 1, set the first day in holdout period
         to be tomorrow. Negative numbers will set it to before today.
     """
-    assert spark is not None, "Must pass SparkSession `spark`"
     if ho_days_in_future is not None:
         ho_start = dt.date.today() + dt.timedelta(days=ho_days_in_future)
     r = mk_time_params(HO_WIN=HO_WIN, MODEL_WIN=MODEL_WIN, ho_start=ho_start)
@@ -226,9 +225,15 @@ def rec_freq_spk2pandas(df_spk, MODEL_WIN):
     return df
 
 
-def run_rec_freq(HO_WIN=14, MODEL_WIN=90, sample_ids="'1'", ho_start="2018-08-01"):
+def run_rec_freq(
+    spark, HO_WIN=14, MODEL_WIN=90, sample_ids="'1'", ho_start="2018-08-01"
+):
     df_spk, q = run_rec_freq_spk(
-        HO_WIN=HO_WIN, MODEL_WIN=MODEL_WIN, sample_ids=sample_ids, ho_start=ho_start
+        spark,
+        HO_WIN=HO_WIN,
+        MODEL_WIN=MODEL_WIN,
+        sample_ids=sample_ids,
+        ho_start=ho_start,
     )
     df = rec_freq_spk2pandas(df_spk, MODEL_WIN)
     return df, df_spk, q
