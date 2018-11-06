@@ -69,12 +69,12 @@ def cond_exp_rets_till_p2345(t, frequency, recency, n, params, p1):
     x = frequency
 
     p2 = exp(nb_lbeta(alpha + x + 1, beta + n - x) - nb_lbeta(alpha, beta))
-    p3 = delta / (gamma - 1) * exp(lgamma(gamma + delta) -
-                                   lgamma(1 + delta))
+    p3 = delta / (gamma - 1) * exp(lgamma(gamma + delta) - lgamma(1 + delta))
     p4 = exp(lgamma(1 + delta + n) - lgamma(gamma + delta + n))
     p5 = exp(lgamma(1 + delta + n + t) - lgamma(gamma + delta + n + t))
 
     return p1 * p2 * p3 * (p4 - p5)
+
 
 #########
 # Tests #

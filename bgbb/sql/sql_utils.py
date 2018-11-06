@@ -6,7 +6,8 @@ import pandas as pd
 from bgbb.sql.sql_utils_tests import test_ho_range, test_model_range, test_rft
 
 
-def to_s3_fmt(date): return date.strftime('%Y%m%d')
+def to_s3_fmt(date):
+    return date.strftime("%Y%m%d")
 
 
 def to_samp_ids(samp_ids: List[int]) -> str:
@@ -18,7 +19,7 @@ def to_samp_ids(samp_ids: List[int]) -> str:
     mn = min(samp_ids)
     mx = max(samp_ids)
     if mn == 1:
-        print('Warning: 0 is minimum sample_id allowed, not 1')
+        print("Warning: 0 is minimum sample_id allowed, not 1")
     elif mn < 0:
         raise ValueError('sample_id >= "0" in main summary')
     if mx > 99:
@@ -31,35 +32,37 @@ def to_sql_list(xs):
     """stringify lists for SQL queries
     >>> to_sql_list([1, 2, 3]) == '1, 2, 3'
     """
+
     def to_sql_literal(x):
         if isinstance(x, str):
             return "'{}'".format(x)
         return str(x)
-    res = ', '.join(map(to_sql_literal, xs))
+
+    res = ", ".join(map(to_sql_literal, xs))
     return res
 
 
 def test_to_sql_list():
-    assert to_sql_list(['GB']) == "'GB'"
-    assert to_sql_list(['GB', 'US', 'IN']) == "'GB', 'US', 'IN'"
-    assert to_sql_list([1, 2, 3]) == '1, 2, 3'
+    assert to_sql_list(["GB"]) == "'GB'"
+    assert to_sql_list(["GB", "US", "IN"]) == "'GB', 'US', 'IN'"
+    assert to_sql_list([1, 2, 3]) == "1, 2, 3"
 
 
-def insert_country(q, insert_before="{sample_comment}",
-                   countries: List[str]=["GB"]):
+def insert_country(q, insert_before="{sample_comment}", countries: List[str] = ["GB"]):
     "Insert country restriction into SQL string for testing"
     i = q.find(insert_before)
     to_insert = "AND country IN ({})\n      ".format(to_sql_list(countries))
     return q[:i] + to_insert + q[i:]
 
 
-def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start='2018-08-01'):
+def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start="2018-08-01"):
     """
     Return container whose attributes are holdout and model input
     date ranges, specified by a training window `MODEL_WIN`,
     holdout evaluation window `HO_WIN` and holdout start date `ho_start`
     (day after last day in model window).
     """
+
     def r():
         pass
 
@@ -71,19 +74,22 @@ def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start='2018-08-01'):
     # Str format
     mod_ho_ev = [r.model_start_date, r.ho_start_date, r.ho_last_date]
     # mod_ho_ev_str
-    (r.model_start_date_str, r.ho_start_date_str, r.ho_last_date_str
-     ) = map(to_s3_fmt, mod_ho_ev)
+    (r.model_start_date_str, r.ho_start_date_str, r.ho_last_date_str) = map(
+        to_s3_fmt, mod_ho_ev
+    )
 
     test_ho_range(r.ho_start_date, r.ho_last_date, HO_WIN)
-    test_model_range(model_start_date=r.model_start_date,
-                     ho_start_date=r.ho_start_date,
-                     MODEL_WIN=MODEL_WIN)
+    test_model_range(
+        model_start_date=r.model_start_date,
+        ho_start_date=r.ho_start_date,
+        MODEL_WIN=MODEL_WIN,
+    )
 
     # r.__dict__.update(locals())
     return r
 
 
-base_query = '''
+base_query = """
 with cid_day as (
     SELECT
         C.client_id
@@ -143,11 +149,12 @@ with cid_day as (
 )
 
 SELECT * FROM {qname}
-'''
+"""
 
 
-def mk_rec_freq_q(q=None, holdout=False, model_start_date_str=None, pcd=None,
-                  sample_ids="'1'", **k):
+def mk_rec_freq_q(
+    q=None, holdout=False, model_start_date_str=None, pcd=None, sample_ids="'1'", **k
+):
     """
     holdout: pull # of returns in holdout period?
     """
@@ -155,18 +162,25 @@ def mk_rec_freq_q(q=None, holdout=False, model_start_date_str=None, pcd=None,
     kw = dict(
         model_start_date_str=model_start_date_str,
         sample_ids=sample_ids,
-        sample_comment='' if sample_ids else '--',
+        sample_comment="" if sample_ids else "--",
         qname=qname,
-        pcd=pcd
+        pcd=pcd,
     )
     kw.update(k)
     kw = {k: v for k, v in kw.items() if v is not None}
     return q.format(**kw)
 
 
-def run_rec_freq_spk(rfn_base_query=base_query, HO_WIN=14, MODEL_WIN=90,
-                     holdout=False, sample_ids="'1'",
-                     ho_start='2018-08-01', ho_days_in_future=None, spark=None):
+def run_rec_freq_spk(
+    rfn_base_query=base_query,
+    HO_WIN=14,
+    MODEL_WIN=90,
+    holdout=False,
+    sample_ids="'1'",
+    ho_start="2018-08-01",
+    ho_days_in_future=None,
+    spark=None,
+):
     """
     holdout: whether to pull # of returns in holdout period. Useful
         for evaluating model.
@@ -182,38 +196,39 @@ def run_rec_freq_spk(rfn_base_query=base_query, HO_WIN=14, MODEL_WIN=90,
         holdout=holdout,
         # ignore_pcd=ignore_pcd,
         sample_ids=sample_ids,
-        model_start_date_str=r.model_start_date_str, pcd=r.model_start_date,
-        ho_start_date=r.ho_start_date, ho_last_date_str=r.ho_last_date_str,
-        ho_start_date_str=r.ho_start_date_str
+        model_start_date_str=r.model_start_date_str,
+        pcd=r.model_start_date,
+        ho_start_date=r.ho_start_date,
+        ho_last_date_str=r.ho_last_date_str,
+        ho_start_date_str=r.ho_start_date_str,
     )
-#     print(r.q)
+    #     print(r.q)
     dfs = spark.sql(r.q)
     return dfs, r.q
 
 
-def reduce_rec_freq_spk(dfs, frt_cols=['Frequency', 'Recency', 'T']):
+def reduce_rec_freq_spk(dfs, frt_cols=["Frequency", "Recency", "T"]):
     """Reduce r/f/n spark dataframe to r/f/n pattern count.
     This can be used for fitting.
     """
-    df_red = dfs.groupby(frt_cols).count(
-    ).withColumnRenamed('count', 'n_users')
+    df_red = dfs.groupby(frt_cols).count().withColumnRenamed("count", "n_users")
     return df_red
 
 
 def rec_freq_spk2pandas(df_spk, MODEL_WIN):
     df = df_spk.toPandas()
-    df = df.assign(Max_day=lambda x: pd.to_datetime(x.Max_day),
-                   Min_day=lambda x: pd.to_datetime(x.Min_day))
+    df = df.assign(
+        Max_day=lambda x: pd.to_datetime(x.Max_day),
+        Min_day=lambda x: pd.to_datetime(x.Min_day),
+    )
     test_rft(df, duration=MODEL_WIN)
-    print('Recency/frequency Definition tests passed')
+    print("Recency/frequency Definition tests passed")
     return df
 
 
-def run_rec_freq(HO_WIN=14, MODEL_WIN=90, sample_ids="'1'",
-                 ho_start='2018-08-01'):
+def run_rec_freq(HO_WIN=14, MODEL_WIN=90, sample_ids="'1'", ho_start="2018-08-01"):
     df_spk, q = run_rec_freq_spk(
-        HO_WIN=HO_WIN, MODEL_WIN=MODEL_WIN, sample_ids=sample_ids,
-        ho_start=ho_start
+        HO_WIN=HO_WIN, MODEL_WIN=MODEL_WIN, sample_ids=sample_ids, ho_start=ho_start
     )
     df = rec_freq_spk2pandas(df_spk, MODEL_WIN)
     return df, df_spk, q

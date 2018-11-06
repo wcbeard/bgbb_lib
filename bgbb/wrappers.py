@@ -46,8 +46,7 @@ class Rfn:
     def __init__(self, mod):
         self.mod = mod
 
-    def cond_prob_alive(self, df, params: List[float]=None, n_days_later=0,
-                        nb=True):
+    def cond_prob_alive(self, df, params: List[float] = None, n_days_later=0, nb=True):
         params = mod_par_list(params, self.mod)
         frequency, recency, n = unload(df, "frequency recency n")
         kw = dict(
@@ -80,14 +79,11 @@ class Rfn:
         params = mod_par_list(params, self.mod)
         return self.mod._loglikelihood(params, x, tx, T, para=para)
 
-    @wraps(BetaGeoBetaBinomFitter
-           .conditional_expected_number_of_purchases_up_to_time)
+    @wraps(BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time)
     def cond_exp_rets_till(self, df, n_days_later, params=None, nb=False):
         x, tx, n = unload(df, "frequency recency n")
         params = mod_par_list(params, self.mod)
-        kw = dict(
-            t=n_days_later, frequency=x, recency=tx, n=n, params=params,
-        )
+        kw = dict(t=n_days_later, frequency=x, recency=tx, n=n, params=params)
         if nb:
             return self.mod.cond_exp_rets_till_nb(**kw)
         return self.mod.cond_exp_rets_till(**kw)

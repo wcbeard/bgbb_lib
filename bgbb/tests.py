@@ -4,6 +4,7 @@ import numpy as np
 
 from bgbb import BGBB
 from wrappers import unload
+
 # from bgbb import BGBB
 
 df = fixture(load_donations)
@@ -22,9 +23,8 @@ def test_cond_prob_alive_nb(df, bg, pars):
 
 
 def test_cond_prob_exp_rets(df, bg, pars):
-    x, tx, n = unload(df, 'frequency recency n')
-    n14_orig = bg.conditional_expected_number_of_purchases_up_to_time(
-        14, data=df)
+    x, tx, n = unload(df, "frequency recency n")
+    n14_orig = bg.conditional_expected_number_of_purchases_up_to_time(14, data=df)
     n14_nb = bg.cond_exp_rets_till_nb(14, x, tx, n, params=pars)
     n14_api = bg.rfn.cond_exp_rets_till(df, n_days_later=14)
     n14_api_nb = bg.rfn.cond_exp_rets_till(df, n_days_later=14, nb=True)

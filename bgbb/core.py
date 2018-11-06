@@ -28,8 +28,7 @@ class BGBB(BetaGeoBetaBinomFitter):
         super().__init__(penalizer_coef=penalizer_coef)
 
     c_exp_num_ev_to = frt(
-        BetaGeoBetaBinomFitter
-        .conditional_expected_number_of_purchases_up_to_time
+        BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time
     )
 
     _loglikelihood = staticmethod(nb_loglikelihood)
@@ -37,13 +36,11 @@ class BGBB(BetaGeoBetaBinomFitter):
 
     @classmethod
     def _negative_log_likelihood(
-        kls,
-        params, frequency, recency, n, n_custs, penalizer_coef=0
+        kls, params, frequency, recency, n, n_custs, penalizer_coef=0
     ):
         penalizer_term = penalizer_coef * sum(np.asarray(params) ** 2)
         return (
-            -np.mean(kls._loglikelihood(params, frequency, recency, n) *
-                     n_custs)
+            -np.mean(kls._loglikelihood(params, frequency, recency, n) * n_custs)
             + penalizer_term
         )
 
@@ -99,8 +96,7 @@ class BGBB(BetaGeoBetaBinomFitter):
 
         p1 = 1 / exp(self._loglikelihood(params, x, tx, n))
         p2 = exp(betaln(alpha + x + 1, beta + n - x) - betaln(alpha, beta))
-        p3 = delta / (gamma - 1) * exp(gammaln(gamma + delta) -
-                                       gammaln(1 + delta))
+        p3 = delta / (gamma - 1) * exp(gammaln(gamma + delta) - gammaln(1 + delta))
         p4 = exp(gammaln(1 + delta + n) - gammaln(gamma + delta + n))
         p5 = exp(gammaln(1 + delta + n + t) - gammaln(gamma + delta + n + t))
 
