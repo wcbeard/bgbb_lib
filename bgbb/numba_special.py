@@ -74,31 +74,3 @@ def cond_exp_rets_till_p2345(t, frequency, recency, n, params, p1):
     p5 = exp(lgamma(1 + delta + n + t) - lgamma(gamma + delta + n + t))
 
     return p1 * p2 * p3 * (p4 - p5)
-
-
-#########
-# Tests #
-#########
-
-
-def test_nb_lbeta(niter=1000):
-    for _ in range(niter):
-        d, g = nr.rand(2) * 1000
-        a = nb_lbeta(d, g)
-        b = betaln(d, g)
-        assert np.allclose(a, b), "{} != {} ({}, {})".format(a, b, d, g)
-
-
-def test_nb_lbeta_vec2():
-    assert np.allclose(nb_lbeta_vec2(1, np.arange(7)), betaln(1, np.arange(7)))
-
-
-def test_nb_logsumexp(n_iter=100):
-    nr.seed(0)
-    for _ in range(n_iter):
-        a = 10 ** (nr.rand(100) * 10)
-        assert np.allclose(nb_logsumexp(a), logsumexp(a))
-
-
-# test_nb_lbeta()
-# test_nb_lbeta_vec2()

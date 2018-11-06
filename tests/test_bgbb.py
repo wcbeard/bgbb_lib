@@ -2,8 +2,8 @@ from pytest import fixture
 from lifetimes.datasets import load_donations
 import numpy as np
 
-from bgbb import BGBB
-from wrappers import unload
+from bgbb.core import BGBB
+from bgbb.wrappers import unload
 
 # from bgbb import BGBB
 
