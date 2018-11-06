@@ -1,7 +1,4 @@
 from pyspark.sql.functions import pandas_udf, PandasUDFType
-
-# import pyspark.sql.types as pt
-# import numpy as np
 from pandas import Series
 
 

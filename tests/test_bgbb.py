@@ -1,11 +1,10 @@
-from pytest import fixture
-from lifetimes.datasets import load_donations
 import numpy as np
+from lifetimes.datasets import load_donations
+from pytest import fixture
 
 from bgbb.core import BGBB
 from bgbb.wrappers import unload
 
-# from bgbb import BGBB
 
 df = fixture(load_donations)
 bg = fixture(lambda: BGBB(params=[1.20, 0.75, 0.66, 2.78]))

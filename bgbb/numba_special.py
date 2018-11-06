@@ -1,14 +1,9 @@
 import math
+
+import numpy as np
 from numba import njit
 from numba import vectorize
-
-from scipy.special import betaln, logsumexp
-import numpy as np
-from numpy import random as nr, exp
-
-
-def get_vals(x):
-    return x.values if hasattr(x, "values") else x
+from numpy import exp
 
 
 @njit
@@ -29,7 +24,7 @@ def lgamma(x):
 
 @njit
 def nb_lbeta(z, w):
-    "https://www.mathworks.com/help/matlab/ref/betaln.html"
+    """See: https://www.mathworks.com/help/matlab/ref/betaln.html"""
     return lgamma(z) + lgamma(w) - lgamma(z + w)
 
 
@@ -56,7 +51,7 @@ def nb_lbeta_vec12(z: np.array, w: np.array):
 ##############
 @njit
 def p_alive_exp_p1_p2(params, xa, na, n_days_later, p3):
-    "For cond_prob_alive_nb"
+    """For cond_prob_alive_nb"""
     alpha, beta, gamma, delta = params
     p1nb = nb_lbeta(alpha + xa, beta + na - xa) - nb_lbeta(alpha, beta)
     p2nb = nb_lbeta(gamma, delta + na + n_days_later) - nb_lbeta(gamma, delta)

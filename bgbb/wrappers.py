@@ -39,6 +39,10 @@ def to_abgd_od(params) -> Dict[str, float]:
     return OrderedDict(zip(abgd_names, params))
 
 
+def module_parameter_list(params, mod):
+    return params or list(mod.params_.values())
+
+
 class Rfn:
     """TODO: document
     """
@@ -47,7 +51,7 @@ class Rfn:
         self.mod = mod
 
     def cond_prob_alive(self, df, params: List[float] = None, n_days_later=0, nb=True):
-        params = mod_par_list(params, self.mod)
+        params = module_parameter_list(params, self.mod)
         frequency, recency, n = unload(df, "frequency recency n")
         kw = dict(
             frequency=frequency,
@@ -59,9 +63,6 @@ class Rfn:
         if nb:
             return self.mod.cond_prob_alive_nb(**kw)
         return self.mod.cond_prob_alive(**kw)
-        # return self.mod.cond_prob_alive(
-        #     frequency, recency, n, params, n_days_later=n_days_later
-        # )
 
     @wraps(BetaGeoBetaBinomFitter.fit)
     def fit(self, df, **kw):
@@ -76,20 +77,14 @@ class Rfn:
     @wraps(BetaGeoBetaBinomFitter._loglikelihood)
     def _loglikelihood(self, df, params=None, para=True):
         x, tx, T = unload(df, "frequency recency n")
-        params = mod_par_list(params, self.mod)
+        params = module_parameter_list(params, self.mod)
         return self.mod._loglikelihood(params, x, tx, T, para=para)
 
     @wraps(BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time)
     def cond_exp_rets_till(self, df, n_days_later, params=None, nb=False):
         x, tx, n = unload(df, "frequency recency n")
-        params = mod_par_list(params, self.mod)
+        params = module_parameter_list(params, self.mod)
         kw = dict(t=n_days_later, frequency=x, recency=tx, n=n, params=params)
         if nb:
             return self.mod.cond_exp_rets_till_nb(**kw)
         return self.mod.cond_exp_rets_till(**kw)
-
-
-def mod_par_list(params, mod):
-    if params is not None:
-        return params
-    return list(mod.params_.values())

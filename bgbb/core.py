@@ -27,6 +27,7 @@ class BGBB(BetaGeoBetaBinomFitter):
         self.rfn = Rfn(self)
         super().__init__(penalizer_coef=penalizer_coef)
 
+    # conditional expected number of events up to time
     c_exp_num_ev_to = frt(
         BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time
     )
@@ -86,12 +87,10 @@ class BGBB(BetaGeoBetaBinomFitter):
         xa, txa, na = map(as_array, [x, tx, n])
         p3 = kls._loglikelihood(params, x, tx, n)
 
-        resnb = p_alive_exp_p1_p2(params, xa, na, n_days_later, p3)
-        return resnb
+        return p_alive_exp_p1_p2(params, xa, na, n_days_later, p3)
 
     def cond_exp_rets_till(self, t, frequency, recency, n, params):
         x, tx = frequency, recency
-        # params = self._unload_params('alpha', 'beta', 'gamma', 'delta')
         alpha, beta, gamma, delta = params
 
         p1 = 1 / exp(self._loglikelihood(params, x, tx, n))
@@ -104,10 +103,7 @@ class BGBB(BetaGeoBetaBinomFitter):
 
     def cond_exp_rets_till_nb(self, t, frequency, recency, n, params):
         xa, txa, na = map(as_array, [frequency, recency, n])
-        # params = self._unload_params('alpha', 'beta', 'gamma', 'delta')
-        # alpha, beta, gamma, delta = params
 
         p1 = 1 / exp(self._loglikelihood(params, xa, txa, na))
         ret = cond_exp_rets_till_p2345(t, xa, txa, na, params, p1)
         return ret
-        # return p1 * p2 * p3 * (p4 - p5)
