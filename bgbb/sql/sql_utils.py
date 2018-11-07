@@ -16,16 +16,10 @@ def to_samp_ids(samp_ids: List[int]) -> str:
     >>> to_samp_ids([0, 1, 2])
     "'0', '1', '2'"
     """
-    mn = min(samp_ids)
-    mx = max(samp_ids)
-    if mn == 1:
-        print("Warning: 0 is minimum sample_id allowed, not 1")
-    elif mn < 0:
-        raise ValueError('sample_id >= "0" in main summary')
-    if mx > 99:
-        raise ValueError('sample_id <= "99" in main summary')
+    invalid_sample = set(samp_ids) - set(range(100))
+    if invalid_sample:
+        raise ValueError("{} is outside of the valid range [0, 99]".format(invalid_sample))
     return to_sql_list(map(str, samp_ids))
-    # (', '.join("'{}'".format(i) for i in samp_ids))
 
 
 def to_sql_list(xs):
