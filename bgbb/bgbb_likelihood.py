@@ -1,6 +1,5 @@
-# import math
-from numba import njit, prange
 import numpy as np
+from numba import njit, prange
 from numpy import log, exp, logaddexp
 from scipy.special import betaln
 
@@ -47,25 +46,19 @@ def nbsum_p(x, tx, recency_T, a, b, g, d, J, ab, gd):
     return res
 
 
-def nbsum(x, tx, recency_T, a, b, g, d, J, ab, gd, para=True):
-    f = nbsum_p if para else nbsum_
+def nbsum(x, tx, recency_T, a, b, g, d, J, ab, gd, parallel=True):
+    f = nbsum_p if parallel else nbsum_
     return f(x, tx, recency_T, a, b, g, d, J, ab, gd)
 
 
-def nb_loglikelihood_(alpha, beta, gamma, delta, x, tx, T, para=True):
+def _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=True):
     """Loglikelihood for optimizer."""
-    # print("Using faster Loglikelihood")
-
     # Constrain the params to be > 0
     if min([alpha, beta, gamma, delta]) <= 0:
         return np.full_like(x, -np.inf)
 
     beta_ab = betaln(alpha, beta)
     beta_gd = betaln(gamma, delta)
-
-    # indiv_loglike = (
-    #     betaln(alpha + x, beta + T - x) - beta_ab + betaln(gamma, delta + T) - beta_gd
-    # )
 
     recency_T = T - tx - 1
     xa, txa, Ta, recency_Ta = map(get_vals, [x, tx, T, recency_T])
@@ -77,15 +70,10 @@ def nb_loglikelihood_(alpha, beta, gamma, delta, x, tx, T, para=True):
         - beta_gd
     )
 
-    # indiv_loglike = indiv_ll(alpha, beta, gamma, delta, xa, Ta, beta_ab, beta_gd)
-    # assert np.allclose(indiv_loglike, indiv_loglike1)
-    # print('.')
-
     J = np.arange(recency_T.max() + 1)
 
-    # s = _sum(x, tx, recency_T)
     s = nbsum(
-        xa, txa, recency_Ta, alpha, beta, gamma, delta, J, beta_ab, beta_gd, para=para
+        xa, txa, recency_Ta, alpha, beta, gamma, delta, J, beta_ab, beta_gd, parallel=parallel
     )
 
     indiv_loglike = logaddexp(indiv_loglike, s)
@@ -96,34 +84,21 @@ def nb_loglikelihood_(alpha, beta, gamma, delta, x, tx, T, para=True):
 ############
 # Wrappers #
 ############
-def nb_loglikelihood(params, x, tx, T, para=True):
+def nb_loglikelihood(params, x, tx, T, parallel=True):
     alpha, beta, gamma, delta = params
-    return nb_loglikelihood_(alpha, beta, gamma, delta, x, tx, T, para=para)
+    return _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=parallel)
 
 
-def nb_loglikelihood_df(params, df, rfn_names=False, para=True, nll=False, ncusts=None):
-    if rfn_names:
-        cnames = ["frequency", "recency", "n"]
-    else:
-        cnames = ["x", "tx", "T"]
-    x, tx, T = [df[c] for c in cnames]
+def nb_loglikelihood_df(
+    params, df, rfn_names=False, parallel=True, nll=False, ncusts=None
+):
+    columns = ["frequency", "recency", "n"] if rfn_names else ["x", "tx", "T"]
+    x, tx, T = [df[c] for c in columns]
     alpha, beta, gamma, delta = params
-    ll = nb_loglikelihood_(alpha, beta, gamma, delta, x, tx, T, para=para)
+    ll = _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=parallel)
     if nll:
         if ncusts is None:
             print("WARNING: ncusts not passed")
             ncusts = 1
         return -np.mean(ll * ncusts)
     return ll
-
-
-#########
-# Tests #
-#########
-def test_nb_loglikelihood():
-    res = nb_loglikelihood([.1, .1, .2, .3], np.r_[3], np.r_[4], np.r_[5])
-    assert np.allclose(res, [-6.31032992])
-
-
-# test_nb_lbeta()
-# test_nb_lbeta_vec2()
