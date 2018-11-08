@@ -1,8 +1,11 @@
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+
+
 bgbb_lib
 ==============================
 
 Reimplementation of the BGBB model (Beta-geometric beta-binomial) based on the [lifetimes](http://lifetimes.readthedocs.io/) library using numba. The papers used for the derivations are [Fader/Hardie 2010](http://www.brucehardie.com/papers/020/fader_et_al_mksc_10.pdf) and
-[Fader & Hardie 2009](http://web-docs.stern.nyu.edu/old_web/emplibrary/Peter%20Fader.pdf)
+[Fader & Hardie 2009](http://web-docs.stern.nyu.edu/old_web/emplibrary/Peter%20Fader.pdf). This runs in python 3.
 
 # Terminology
 

@@ -3,6 +3,7 @@ import numpy as np
 from scipy.special import betaln, logsumexp
 from bgbb.numba_special import nb_lbeta, nb_lbeta_vec2, nb_logsumexp
 
+
 def test_nb_lbeta(niter=1000):
     for _ in range(niter):
         d, g = np.random.rand(2) * 1000

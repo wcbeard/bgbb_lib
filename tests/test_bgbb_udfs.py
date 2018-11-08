@@ -1,4 +1,3 @@
-# conda install -c conda-forge pyspark
 from lifetimes.datasets import load_donations
 import pyspark
 from pytest import fixture

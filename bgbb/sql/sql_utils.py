@@ -18,7 +18,9 @@ def to_samp_ids(samp_ids: List[int]) -> str:
     """
     invalid_sample = set(samp_ids) - set(range(100))
     if invalid_sample:
-        raise ValueError("{} is outside of the valid range [0, 99]".format(invalid_sample))
+        raise ValueError(
+            "{} is outside of the valid range [0, 99]".format(invalid_sample)
+        )
     return to_sql_list(map(str, samp_ids))
 
 
@@ -36,7 +38,9 @@ def to_sql_list(xs):
     return res
 
 
-def insert_country(q, insert_before="{sample_comment}", countries: List[str] = ["GB"]):
+def insert_country(
+    q, insert_before="{sample_comment}", countries: List[str] = ["GB"]
+):
     "Insert country restriction into SQL string for testing"
     i = q.find(insert_before)
     to_insert = "AND country IN ({})\n      ".format(to_sql_list(countries))
@@ -89,9 +93,9 @@ with cid_day as (
 , cid_model as (
     SELECT
         C.client_id
-        , MIN(C.sub_date) Min_day
+        , MIN(C.sub_date) AS Min_day
         , MAX(C.sub_date) AS Max_day
-        , COUNT(*) X
+        , COUNT(*) AS X
     FROM cid_day C
     WHERE
       C.submission_date_s3 >= '{model_start_date_str}'
@@ -102,7 +106,7 @@ with cid_day as (
 , cid_holdout as (
     SELECT
         C.client_id
-        , COUNT(*) N_holdout
+        , COUNT(*) AS N_holdout
     FROM cid_day C
     WHERE
       C.submission_date_s3 >= '{ho_start_date_str}'
@@ -113,9 +117,10 @@ with cid_day as (
 , rec_freq as (
     SELECT
         C.client_id
-        , datediff(C.Max_day, Min_day) Recency
-        , X - 1 Frequency
-        , datediff('{ho_start_date}', Min_day) - 1 T
+        , datediff(C.Max_day, Min_day) AS Recency
+        , X - 1 AS Frequency
+        -- N: # opportunities to return
+        , datediff('{ho_start_date}', Min_day) - 1  AS N
         , C.Max_day
         , C.Min_day
     FROM cid_model C
@@ -123,7 +128,7 @@ with cid_day as (
 
 , rec_freq_holdout as (
   SELECT R.*
-        , coalesce(H.N_holdout, 0) N_holdout
+        , coalesce(H.N_holdout, 0) AS N_holdout
   FROM rec_freq R
   LEFT JOIN cid_holdout H
     ON R.client_id = H.client_id
@@ -134,7 +139,12 @@ SELECT * FROM {qname}
 
 
 def mk_rec_freq_q(
-    q=None, holdout=False, model_start_date_str=None, pcd=None, sample_ids="'1'", **k
+    q=None,
+    holdout=False,
+    model_start_date_str=None,
+    pcd=None,
+    sample_ids="'1'",
+    **k
 ):
     """
     holdout: pull # of returns in holdout period?
@@ -187,12 +197,11 @@ def run_rec_freq_spk(
     return dfs, r.q
 
 
-def reduce_rec_freq_spk(dfs, frt_cols=["Frequency", "Recency", "T"]):
+def reduce_rec_freq_spk(dfs, rfn_cols=["Recency", "Frequency", "N"]):
     """Reduce r/f/n spark dataframe to r/f/n pattern count.
     This can be used for fitting.
     """
-    df_red = dfs.groupby(frt_cols).count().withColumnRenamed("count", "n_users")
-    return df_red
+    return dfs.groupby(rfn_cols).count().withColumnRenamed("count", "n_users")
 
 
 def rec_freq_spk2pandas(df_spk, MODEL_WIN):
