@@ -3,7 +3,7 @@ from typing import List
 
 import pandas as pd
 
-from bgbb.sql.sql_utils_tests import test_ho_range, test_model_range, test_rft
+# from bgbb.sql.sql_utils_tests import test_rft
 
 
 def to_s3_fmt(date):
@@ -36,12 +36,6 @@ def to_sql_list(xs):
     return res
 
 
-def test_to_sql_list():
-    assert to_sql_list(["GB"]) == "'GB'"
-    assert to_sql_list(["GB", "US", "IN"]) == "'GB', 'US', 'IN'"
-    assert to_sql_list([1, 2, 3]) == "1, 2, 3"
-
-
 def insert_country(q, insert_before="{sample_comment}", countries: List[str] = ["GB"]):
     "Insert country restriction into SQL string for testing"
     i = q.find(insert_before)
@@ -70,13 +64,6 @@ def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start="2018-08-01"):
     # mod_ho_ev_str
     (r.model_start_date_str, r.ho_start_date_str, r.ho_last_date_str) = map(
         to_s3_fmt, mod_ho_ev
-    )
-
-    test_ho_range(r.ho_start_date, r.ho_last_date, HO_WIN)
-    test_model_range(
-        model_start_date=r.model_start_date,
-        ho_start_date=r.ho_start_date,
-        MODEL_WIN=MODEL_WIN,
     )
 
     # r.__dict__.update(locals())
