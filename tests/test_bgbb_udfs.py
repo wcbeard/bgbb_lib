@@ -49,7 +49,7 @@ def p_alive(udfs):
 
 @fixture
 def n_returns(udfs):
-    p_alive, n_returns = udfs
+    _, n_returns = udfs
     return n_returns
 
 
