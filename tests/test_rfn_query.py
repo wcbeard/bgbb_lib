@@ -3,25 +3,24 @@ import pandas as pd
 from pandas.compat import lrange
 from pandas import DataFrame
 
-from bgbb.sql.sql_utils import run_rec_freq_spk, to_s3_fmt
-import pyspark
+from bgbb.sql.sql_utils import run_rec_freq_spk, rec_freq_spk2pandas, to_s3_fmt
 from pytest import fixture
 
 
-spark = pyspark.sql.SparkSession.builder.appName("test").getOrCreate()
+MODEL_START_DATE = dt.date(2018, 6, 1)
+MAX_OPPORTUNITIES = 9
+DURATION = 10
 
 
 def int2date(i):
-    return model_start_date + dt.timedelta(days=i - 1)
+    return MODEL_START_DATE + dt.timedelta(days=i - 1)
 
 
-model_start_date = dt.date(2018, 6, 1)
-MAX_OPPORTUNITIES = 9
-DURATION = 10
 rfn_cols = ["Recency", "Frequency", "N"]
 
 
-def generate_clients_daily():
+@fixture
+def clients_daily_df():
     """
     Testing model window of 10 day.
     Day 0: day before model start date
@@ -64,17 +63,21 @@ def generate_clients_daily():
     return clients_daily_df
 
 
-def generate_rfn_df():
-    clients_daily_df = generate_clients_daily()
+@fixture
+def rfn_spk(clients_daily_df, spark):
     clients_daily_dfs = spark.createDataFrame(clients_daily_df)
 
     clients_daily_dfs.registerTempTable("clients_daily")
     rfn_dfs, _q = run_rec_freq_spk(
         spark, HO_WIN=1, MODEL_WIN=10, sample_ids="'1'", ho_start="2018-06-11"
     )
+    return rfn_dfs
 
+
+@fixture
+def rfn(rfn_spk):
     rfn = (
-        rfn_dfs.toPandas()
+        rfn_spk.toPandas()
         .set_index("client_id")
         .assign(
             Max_day=lambda x: pd.to_datetime(x.Max_day).dt.date,
@@ -82,10 +85,6 @@ def generate_rfn_df():
         )
     )
     return rfn
-
-
-clients_daily_df = fixture(generate_clients_daily)
-rfn = fixture(generate_rfn_df)
 
 
 def test_user_active_before_range_not_in_rfn(rfn):
@@ -136,3 +135,7 @@ def test_rfn_invariants(rfn, duration=None):
         rfn.eval("Max_day - Min_day").astype("timedelta64[D]").astype(int).max()
     )
     assert max_dur == MAX_OPPORTUNITIES
+
+
+def test_rec_freq_spk2pandas(rfn_spk):
+    return rec_freq_spk2pandas(rfn_spk, DURATION)

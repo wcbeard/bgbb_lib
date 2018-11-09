@@ -56,7 +56,7 @@ def test_to_sql_list():
     assert to_sql_list([1, 2, 3]) == "1, 2, 3"
 
 
-def test_model_range(r1, r2):
+def test_mk_time_param_model_range(r1, r2):
     check_model_range(
         model_start_date=r1.model_start_date,
         ho_start_date=r1.ho_start_date,

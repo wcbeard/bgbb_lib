@@ -3,8 +3,6 @@ from typing import List
 
 import pandas as pd
 
-# from bgbb.sql.sql_utils_tests import test_rft
-
 
 def to_s3_fmt(date):
     return date.strftime("%Y%m%d")
@@ -210,8 +208,6 @@ def rec_freq_spk2pandas(df_spk, MODEL_WIN):
         Max_day=lambda x: pd.to_datetime(x.Max_day),
         Min_day=lambda x: pd.to_datetime(x.Min_day),
     )
-    test_rft(df, duration=MODEL_WIN)
-    print("Recency/frequency Definition tests passed")
     return df
 
 
