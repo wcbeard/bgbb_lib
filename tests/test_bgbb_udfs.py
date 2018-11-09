@@ -43,7 +43,7 @@ def udfs(bgbb, params):
 
 @fixture
 def p_alive(udfs):
-    p_alive, n_returns = udfs
+    p_alive, _ = udfs
     return p_alive
 
 
