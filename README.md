@@ -91,3 +91,8 @@ easy_install dist/bgbb-0.1-py3.6.egg
 python -c "import bgbb; print(bgbb)"
 python -c "from bgbb import bgbb"
 ```
+
+# License
+Licensed under either
+ - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)) or 
+ - MIT license ([LICENSE-MIT](LICENSE-MIT))
