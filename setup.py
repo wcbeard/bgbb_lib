@@ -15,4 +15,5 @@ setup(
     license=["Apache 2.0", "MIT"],
     extras_require={"test": ["pytest"]},
     classifiers=["Programming Language :: Python :: 3.6"],
+    download_url="https://github.com/wcbeard/bgbb_lib/archive/v0.1.2.tar.gz",
 )
