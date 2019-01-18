@@ -4,7 +4,7 @@ from lifetimes.fitters.beta_geo_beta_binom_fitter import BetaGeoBetaBinomFitter
 from pytest import fixture
 
 from bgbb import BGBB
-from bgbb.sql.bgbb_udfs import mk_udfs
+from bgbb.sql.bgbb_udfs import mk_n_returns_udf, mk_p_alive_udf
 from bgbb.wrappers import to_abgd_od
 
 df = fixture(load_donations)
@@ -34,23 +34,13 @@ def ref_model(params, df):
 
 
 @fixture
-def udfs(bgbb, params):
-    p_alive, n_returns = mk_udfs(
-        bgbb, params=params, return_in_next_n_days=14, alive_n_days_later=0
-    )
-    return p_alive, n_returns
+def p_alive(bgbb, params):
+    return mk_p_alive_udf(bgbb, params=params, alive_n_days_later=0)
 
 
 @fixture
-def p_alive(udfs):
-    p_alive, _ = udfs
-    return p_alive
-
-
-@fixture
-def n_returns(udfs):
-    _, n_returns = udfs
-    return n_returns
+def n_returns(bgbb, params):
+    return mk_n_returns_udf(bgbb, params=params, return_in_next_n_days=14)
 
 
 def test_p_alive(dfs, p_alive, ref_model):
