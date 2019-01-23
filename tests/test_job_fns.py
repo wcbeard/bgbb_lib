@@ -53,8 +53,8 @@ def create_clients_daily_table(spark, dataframe_factory):
     def gen_coins(n_coins, abgd=[1, 3, 4, 10]):
         a, b, g, d = abgd
         p = nr.beta(a, b, size=n_coins)
-        θ = nr.beta(g, d, size=n_coins)
-        return p, θ
+        th = nr.beta(g, d, size=n_coins)
+        return p, th
 
     def client_2_daily_pings(client, days):
         client_days = []
@@ -64,7 +64,7 @@ def create_clients_daily_table(spark, dataframe_factory):
         return client_days
 
     def gen_client_days(
-        client: dict, day_range, p: float, θ: float, ensure_first=True
+        client: dict, day_range, p: float, th: float, ensure_first=True
     ):
         """If `ensure_first`, add 1st day of day_range to their history
         so that every client will show up in `rfn`.
@@ -72,7 +72,7 @@ def create_clients_daily_table(spark, dataframe_factory):
         days_used_browser = []
         for day in day_range:
             # die coin
-            if coin_flip(θ):
+            if coin_flip(th):
                 break
             return_today = coin_flip(p)
             if return_today:
@@ -87,12 +87,12 @@ def create_clients_daily_table(spark, dataframe_factory):
         ps[0], θs[0] = 1, 0  # at least someone returns every day
 
         cids_rows = []
-        for cid, samp, p, θ in zip(count(), samples, ps, θs):
+        for cid, samp, p, th in zip(count(), samples, ps, θs):
             row = default_sample.copy()
             row.update(dict(client_id=cid, sample_id=samp))
 
             cid_rows = gen_client_days(
-                client=row, day_range=day_range, p=p, θ=θ
+                client=row, day_range=day_range, p=p, th=th
             )
             if not cid:
                 print(cid_rows)
@@ -101,7 +101,6 @@ def create_clients_daily_table(spark, dataframe_factory):
 
     cdaily_factory = generate_data(dataframe_factory)
 
-    # @fixture
     def gen_clients_daily(n_clients_in_sample, abgd=[1, 3, 1, 10], seed=0):
         nr.seed(seed)
         table_data = gen_client_dicts(
@@ -112,8 +111,6 @@ def create_clients_daily_table(spark, dataframe_factory):
         dataframe.createOrReplaceTempView("clients_daily")
         dataframe.cache()
         return dataframe
-        # yield dataframe
-        # dataframe.unpersist()
 
     gen_clients_daily(N_CLIENTS_IN_SAMPLE)
 
