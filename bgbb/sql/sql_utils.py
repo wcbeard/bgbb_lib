@@ -17,7 +17,7 @@ def to_samp_ids(samp_ids: Union[List[int], int]) -> str:
     """
     if not isinstance(samp_ids, list):
         samp_ids = [samp_ids]
-    samp_ids: List[int] = lmap(int, samp_ids)
+    samp_ids = lmap(int, samp_ids)  # type: List[int]
     invalid_sample = set(samp_ids) - set(range(100))
     if invalid_sample:
         raise ValueError(
@@ -152,7 +152,7 @@ def mk_rec_freq_q(
     holdout: pull # of returns in holdout period?
     """
     qname = "rec_freq_holdout" if holdout else "rec_freq"
-    sample_ids_str: str = to_samp_ids(sample_ids)
+    sample_ids_str = to_samp_ids(sample_ids)  # type: str
 
     kw = dict(
         model_start_date_str=model_start_date_str,

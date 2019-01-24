@@ -7,7 +7,7 @@ import pandas as pd
 from pyspark.sql.types import StringType, StructField, StructType
 from pytest import fixture
 
-import bgbb.sql.job_functions as jf
+import bgbb.sql.airflow_job as job
 
 MODEL_WINDOW = 90
 HO_WINDOW = 10
@@ -118,10 +118,10 @@ def create_clients_daily_table(spark, dataframe_factory):
 @fixture
 def rfn(spark, create_clients_daily_table):
     create_clients_daily_table
-    rfn = jf.extract(
+    rfn = job.extract(
         spark, model_win=MODEL_WINDOW, ho_start=HO_START.date(), sample_ids=[1]
     )
-    rfn2 = jf.transform(rfn, return_preds=[7, 14])
+    rfn2 = job.transform(rfn, return_preds=[7, 14])
     return rfn2
 
 

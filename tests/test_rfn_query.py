@@ -67,7 +67,7 @@ def clients_daily_df():
 def rfn_spk(clients_daily_df, spark):
     clients_daily_dfs = spark.createDataFrame(clients_daily_df)
 
-    clients_daily_dfs.registerTempTable("clients_daily")
+    clients_daily_dfs.createOrReplaceTempView("clients_daily")
     rfn_dfs, _q = run_rec_freq_spk(
         spark, ho_win=1, model_win=10, sample_ids=[1], ho_start="2018-06-11"
     )
