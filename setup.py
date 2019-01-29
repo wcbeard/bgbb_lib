@@ -5,7 +5,7 @@ setup(
     version="0.1.2",
     packages=find_packages(),
     install_requires=[
-        "lifetimes",
+        "lifetimes==0.9",
         "numba",
         "scipy",
         "pandas",
@@ -13,6 +13,6 @@ setup(
         "pyspark",
     ],
     license=["Apache 2.0", "MIT"],
-    extras_require={"test": ["pytest"]},
-    classifiers=["Programming Language :: Python :: 3.6"],
+    extras_require={"test": ["pytest"], "cli": ["click"]},
+    classifiers=["Programming Language :: Python :: 3.5"],
 )

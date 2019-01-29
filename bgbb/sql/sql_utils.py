@@ -1,19 +1,23 @@
 import datetime as dt
-from typing import List
+from typing import List, Union
 
 import pandas as pd
+from pandas.compat import lmap
 
 
 def to_s3_fmt(date):
     return date.strftime("%Y%m%d")
 
 
-def to_samp_ids(samp_ids: List[int]) -> str:
+def to_samp_ids(samp_ids: Union[List[int], int]) -> str:
     """
     iter of ints to SQL string version for main_summary
     >>> to_samp_ids([0, 1, 2])
     "'0', '1', '2'"
     """
+    if not isinstance(samp_ids, list):
+        samp_ids = [samp_ids]
+    samp_ids = lmap(int, samp_ids)  # type: List[int]
     invalid_sample = set(samp_ids) - set(range(100))
     if invalid_sample:
         raise ValueError(
@@ -45,11 +49,11 @@ def insert_country(
     return q[:i] + to_insert + q[i:]
 
 
-def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start="2018-08-01"):
+def mk_time_params(ho_win=14, model_win=90, ho_start="2018-08-01"):
     """
     Return container whose attributes are holdout and model input
-    date ranges, specified by a training window `MODEL_WIN`,
-    holdout evaluation window `HO_WIN` and holdout start date `ho_start`
+    date ranges, specified by a training window `model_win`,
+    holdout evaluation window `ho_win` and holdout start date `ho_start`
     (day after last day in model window).
     """
 
@@ -58,8 +62,8 @@ def mk_time_params(HO_WIN=14, MODEL_WIN=90, ho_start="2018-08-01"):
 
     r.ho_start_datet = pd.to_datetime(ho_start)
     r.ho_start_date = r.ho_start_datet.date()
-    r.ho_last_date = r.ho_start_date + dt.timedelta(days=HO_WIN - 1)
-    r.model_start_date = r.ho_start_date - dt.timedelta(days=MODEL_WIN)
+    r.ho_last_date = r.ho_start_date + dt.timedelta(days=ho_win - 1)
+    r.model_start_date = r.ho_start_date - dt.timedelta(days=model_win)
 
     # Str format
     mod_ho_ev = [r.model_start_date, r.ho_start_date, r.ho_last_date]
@@ -139,18 +143,20 @@ SELECT * FROM {qname}
 def mk_rec_freq_q(
     q=None,
     holdout=False,
-    model_start_date_str=None,
+    model_start_date_str: str=None,
     pcd=None,
-    sample_ids="'1'",
+    sample_ids: List[int]=[1],
     **k
 ):
     """
     holdout: pull # of returns in holdout period?
     """
     qname = "rec_freq_holdout" if holdout else "rec_freq"
+    sample_ids_str = to_samp_ids(sample_ids)  # type: str
+
     kw = dict(
         model_start_date_str=model_start_date_str,
-        sample_ids=sample_ids,
+        sample_ids=sample_ids_str,
         sample_comment="" if sample_ids else "--",
         qname=qname,
         pcd=pcd,
@@ -163,10 +169,10 @@ def mk_rec_freq_q(
 def run_rec_freq_spk(
     spark,
     rfn_base_query=base_query,
-    HO_WIN=14,
-    MODEL_WIN=90,
+    ho_win=14,
+    model_win=90,
     holdout=False,
-    sample_ids="'1'",
+    sample_ids: List[int]=[],
     ho_start="2018-08-01",
     ho_days_in_future=None,
 ):
@@ -178,7 +184,7 @@ def run_rec_freq_spk(
     """
     if ho_days_in_future is not None:
         ho_start = dt.date.today() + dt.timedelta(days=ho_days_in_future)
-    r = mk_time_params(HO_WIN=HO_WIN, MODEL_WIN=MODEL_WIN, ho_start=ho_start)
+    r = mk_time_params(ho_win=ho_win, model_win=model_win, ho_start=ho_start)
     r.q = mk_rec_freq_q(
         q=rfn_base_query,
         holdout=holdout,
@@ -202,7 +208,7 @@ def reduce_rec_freq_spk(dfs, rfn_cols=["Recency", "Frequency", "N"]):
     return dfs.groupby(rfn_cols).count().withColumnRenamed("count", "n_users")
 
 
-def rec_freq_spk2pandas(df_spk, MODEL_WIN):
+def rec_freq_spk2pandas(df_spk, model_win):
     df = df_spk.toPandas()
     df = df.assign(
         Max_day=lambda x: pd.to_datetime(x.Max_day),
@@ -212,14 +218,14 @@ def rec_freq_spk2pandas(df_spk, MODEL_WIN):
 
 
 def run_rec_freq(
-    spark, HO_WIN=14, MODEL_WIN=90, sample_ids="'1'", ho_start="2018-08-01"
+    spark, ho_win=14, model_win=90, sample_ids=[1], ho_start="2018-08-01"
 ):
     df_spk, q = run_rec_freq_spk(
         spark,
-        HO_WIN=HO_WIN,
-        MODEL_WIN=MODEL_WIN,
+        ho_win=ho_win,
+        model_win=model_win,
         sample_ids=sample_ids,
         ho_start=ho_start,
     )
-    df = rec_freq_spk2pandas(df_spk, MODEL_WIN)
+    df = rec_freq_spk2pandas(df_spk, model_win)
     return df, df_spk, q
