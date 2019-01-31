@@ -88,7 +88,7 @@ def save(submission_date, bucket, prefix, params_df):
 @click.option(
     "--bucket", type=str, default="net-mozaws-prod-us-west-2-pipeline-analysis"
 )
-@click.option("--prefix", type=str, default="wbeard/bgbb_preds")
+@click.option("--prefix", type=str, default="wbeard/bgbb_params")
 def main(
     submission_date,
     model_win,

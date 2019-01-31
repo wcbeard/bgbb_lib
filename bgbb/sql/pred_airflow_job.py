@@ -74,7 +74,7 @@ def save(submission_date, bucket, prefix, df):
 @click.option(
     "--bucket", type=str, default="net-mozaws-prod-us-west-2-pipeline-analysis"
 )
-@click.option("--prefix", type=str, default="wbeard/returns")
+@click.option("--prefix", type=str, default="wbeard/bgbb_preds")
 def main(model_win, sample_ids, submission_date, model_params, bucket, prefix):
     spark = SparkSession.builder.getOrCreate()
 

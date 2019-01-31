@@ -5,6 +5,7 @@ setup(
     version="0.1.2",
     packages=find_packages(),
     install_requires=[
+        "click",
         "lifetimes==0.9",
         "numba",
         "scipy",
@@ -13,6 +14,6 @@ setup(
         "pyspark",
     ],
     license=["Apache 2.0", "MIT"],
-    extras_require={"test": ["pytest"], "cli": ["click"]},
+    extras_require={"test": ["pytest"]},
     classifiers=["Programming Language :: Python :: 3.5"],
 )
