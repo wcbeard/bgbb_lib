@@ -1,4 +1,3 @@
-import ast
 from typing import List
 
 import click
@@ -6,20 +5,7 @@ from pyspark.sql import SparkSession
 
 from bgbb import BGBB
 from bgbb.sql.bgbb_udfs import mk_n_returns_udf, mk_p_alive_udf
-from bgbb.sql.sql_utils import run_rec_freq_spk
-
-
-class PythonLiteralOption(click.Option):
-    """
-    allow passing click a list of floats or ints
-    https://stackoverflow.com/a/47730333/386279
-    """
-
-    def type_cast_value(self, ctx, value):
-        try:
-            return ast.literal_eval(value)
-        except Exception:
-            raise click.BadParameter(value)
+from bgbb.sql.sql_utils import run_rec_freq_spk, PythonLiteralOption
 
 
 def extract(spark, ho_start, model_win=90, sample_ids: List[int] = []):
@@ -71,8 +57,8 @@ def save(submission_date, bucket, prefix, df):
     )
 
 
-@click.command("returns")
-@click.option("--model-win", type=int, default=180)
+@click.command("bgbb_preds")
+@click.option("--model-win", type=int, default=120)
 @click.option(
     "--sample-ids",
     cls=PythonLiteralOption,

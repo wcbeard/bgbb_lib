@@ -7,7 +7,9 @@ import pandas as pd
 from pyspark.sql.types import StringType, StructField, StructType
 from pytest import fixture
 
-import bgbb.sql.airflow_job as job
+import bgbb.sql.fit_airflow_job as fit_job
+import bgbb.sql.pred_airflow_job as pred_job
+from bgbb.sql.sql_utils import S3_DAY_FMT, S3_DAY_FMT_DASH
 
 MODEL_WINDOW = 90
 HO_WINDOW = 10
@@ -17,7 +19,7 @@ HO_ENDp1 = HO_START + dt.timedelta(days=HO_WINDOW + 1)
 day_range = pd.date_range(MODEL_START, HO_ENDp1)
 
 N_CLIENTS_IN_SAMPLE = 10
-S3_DAY_FMT = "%Y%m%d"
+N_CLIENTS_ALL = 2 * N_CLIENTS_IN_SAMPLE
 
 
 @fixture()
@@ -94,8 +96,6 @@ def create_clients_daily_table(spark, dataframe_factory):
             cid_rows = gen_client_days(
                 client=row, day_range=day_range, p=p, th=th
             )
-            if not cid:
-                print(cid_rows)
             cids_rows.extend(cid_rows)
         return cids_rows
 
@@ -118,16 +118,16 @@ def create_clients_daily_table(spark, dataframe_factory):
 @fixture
 def rfn(spark, create_clients_daily_table):
     create_clients_daily_table
-    rfn = job.extract(
+    rfn = pred_job.extract(
         spark, model_win=MODEL_WINDOW, ho_start=HO_START.date(), sample_ids=[1]
     )
-    rfn2 = job.transform(rfn, return_preds=[7, 14])
+    rfn2 = pred_job.transform(rfn, return_preds=[7, 14])
     return rfn2
 
 
 @fixture
 def rfn_pd(rfn):
-    return rfn.toPandas().set_index('client_id').sort_index()
+    return rfn.toPandas().set_index("client_id").sort_index()
 
 
 def test_max_preds(rfn_pd):
@@ -144,3 +144,22 @@ def test_max_preds(rfn_pd):
     assert (first_client_preds == max_min.loc["max"]).all()
     assert (first_client_preds > max_min.loc["min"]).all()
     assert len(rfn_pd) == N_CLIENTS_IN_SAMPLE
+
+
+def test_get_params(spark, create_clients_daily_table):
+    "TODO: test multiple preds"
+    create_clients_daily_table
+    ho_start = HO_START.strftime(S3_DAY_FMT_DASH)
+    rfn, n_users = fit_job.extract(
+        ho_start,
+        spark,
+        ho_win=HO_WINDOW,
+        model_win=MODEL_WINDOW,
+        samp_frac=1.0,
+        check_min_users=1,
+        sample_ids=range(100),
+    )
+    assert n_users == N_CLIENTS_ALL, "Windows should contain all created users"
+    params = fit_job.transform(rfn, spark, penalizer_coef=0.01)
+    assert params.count() == 1, "Returns single row"
+    return params

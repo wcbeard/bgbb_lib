@@ -4,7 +4,6 @@ https://github.com/mozilla/python_mozetl/blob/master/tests/conftest.py
 """
 import pyspark
 import pytest
-from pyspark.sql import SparkSession
 from pytest import fixture
 
 
@@ -25,7 +24,8 @@ class DataFrameFactory:
         """Generate a dataframe in the shape of the base dictionary where every
         row has column values overwritten by the snippets.
 
-        :snippets list[dict]: a list of fields to overwrite in the base dictionary
+        :snippets list[dict]: a list of fields to overwrite in the base
+            dictionary
         :base dict: a base instantiation of a row in the dataset
         :schema pyspark.sql.types.StructType: schema for the dataset
         """
@@ -88,7 +88,8 @@ def dataframe_factory(spark):
 
         @pytest.fixture
         def generate_data(dataframe_factory, base_document):
-            return partial(dataframe_factory.create_dataframe, base=base_document)
+            return partial(dataframe_factory.create_dataframe,
+                base=base_document)
 
         def test_3_unique_uids(generate_data):
             data = generate_data([
