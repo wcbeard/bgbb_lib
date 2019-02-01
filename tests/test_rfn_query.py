@@ -138,4 +138,4 @@ def test_rfn_invariants(rfn, duration=None):
 
 
 def test_rec_freq_spk2pandas(rfn_spk):
-    return rec_freq_spk2pandas(rfn_spk, DURATION)
+    return rec_freq_spk2pandas(rfn_spk)

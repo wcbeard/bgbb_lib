@@ -5,8 +5,12 @@ import pandas as pd
 from pandas.compat import lmap
 
 
+S3_DAY_FMT = "%Y%m%d"
+S3_DAY_FMT_DASH = "%Y-%m-%d"
+
+
 def to_s3_fmt(date):
-    return date.strftime("%Y%m%d")
+    return date.strftime(S3_DAY_FMT)
 
 
 def to_samp_ids(samp_ids: Union[List[int], int]) -> str:
@@ -15,15 +19,15 @@ def to_samp_ids(samp_ids: Union[List[int], int]) -> str:
     >>> to_samp_ids([0, 1, 2])
     "'0', '1', '2'"
     """
-    if not isinstance(samp_ids, list):
+    if not isinstance(samp_ids, (list, range)):
         samp_ids = [samp_ids]
-    samp_ids = lmap(int, samp_ids)  # type: List[int]
-    invalid_sample = set(samp_ids) - set(range(100))
+    samp_ids_i = lmap(int, samp_ids)  # type: List[int]
+    invalid_sample = set(samp_ids_i) - set(range(100))
     if invalid_sample:
         raise ValueError(
             "{} is outside of the valid range [0, 99]".format(invalid_sample)
         )
-    return to_sql_list(map(str, samp_ids))
+    return to_sql_list(map(str, samp_ids_i))
 
 
 def to_sql_list(xs):
@@ -143,9 +147,9 @@ SELECT * FROM {qname}
 def mk_rec_freq_q(
     q=None,
     holdout=False,
-    model_start_date_str: str=None,
+    model_start_date_str: str = None,
     pcd=None,
-    sample_ids: List[int]=[1],
+    sample_ids: List[int] = [1],
     **k
 ):
     """
@@ -172,7 +176,7 @@ def run_rec_freq_spk(
     ho_win=14,
     model_win=90,
     holdout=False,
-    sample_ids: List[int]=[],
+    sample_ids: List[int] = [],
     ho_start="2018-08-01",
     ho_days_in_future=None,
 ):
@@ -208,7 +212,7 @@ def reduce_rec_freq_spk(dfs, rfn_cols=["Recency", "Frequency", "N"]):
     return dfs.groupby(rfn_cols).count().withColumnRenamed("count", "n_users")
 
 
-def rec_freq_spk2pandas(df_spk, model_win):
+def rec_freq_spk2pandas(df_spk):
     df = df_spk.toPandas()
     df = df.assign(
         Max_day=lambda x: pd.to_datetime(x.Max_day),
@@ -227,5 +231,5 @@ def run_rec_freq(
         sample_ids=sample_ids,
         ho_start=ho_start,
     )
-    df = rec_freq_spk2pandas(df_spk, model_win)
+    df = rec_freq_spk2pandas(df_spk)
     return df, df_spk, q
