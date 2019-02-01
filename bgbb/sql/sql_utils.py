@@ -1,27 +1,12 @@
-import ast
 import datetime as dt
 from typing import List, Union
 
-import click
 import pandas as pd
 from pandas.compat import lmap
 
 
 S3_DAY_FMT = "%Y%m%d"
 S3_DAY_FMT_DASH = "%Y-%m-%d"
-
-
-class PythonLiteralOption(click.Option):
-    """
-    allow passing click a list of floats or ints
-    https://stackoverflow.com/a/47730333/386279
-    """
-
-    def type_cast_value(self, ctx, value):
-        try:
-            return ast.literal_eval(value)
-        except Exception:
-            raise click.BadParameter(value)
 
 
 def to_s3_fmt(date):
