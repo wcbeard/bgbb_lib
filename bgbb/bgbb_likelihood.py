@@ -11,7 +11,9 @@ def get_vals(x):
 
 
 @njit
-def nbsum_scalar(x, tx, recency_T, alpha, beta, gamma, delta, J, beta_ab, beta_gd):
+def nbsum_scalar(
+    x, tx, recency_T, alpha, beta, gamma, delta, J, beta_ab, beta_gd
+):
     if recency_T <= -1:
         return -np.inf
 
@@ -73,7 +75,17 @@ def _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=True):
     J = np.arange(recency_T.max() + 1)
 
     s = nbsum(
-        xa, txa, recency_Ta, alpha, beta, gamma, delta, J, beta_ab, beta_gd, parallel=parallel
+        xa,
+        txa,
+        recency_Ta,
+        alpha,
+        beta,
+        gamma,
+        delta,
+        J,
+        beta_ab,
+        beta_gd,
+        parallel=parallel,
     )
 
     indiv_loglike = logaddexp(indiv_loglike, s)
@@ -86,7 +98,9 @@ def _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=True):
 ############
 def nb_loglikelihood(params, x, tx, T, parallel=True):
     alpha, beta, gamma, delta = params
-    return _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=parallel)
+    return _nb_loglikelihood(
+        alpha, beta, gamma, delta, x, tx, T, parallel=parallel
+    )
 
 
 def nb_loglikelihood_df(
@@ -95,7 +109,9 @@ def nb_loglikelihood_df(
     columns = ["frequency", "recency", "n"] if rfn_names else ["x", "tx", "T"]
     x, tx, T = [df[c] for c in columns]
     alpha, beta, gamma, delta = params
-    ll = _nb_loglikelihood(alpha, beta, gamma, delta, x, tx, T, parallel=parallel)
+    ll = _nb_loglikelihood(
+        alpha, beta, gamma, delta, x, tx, T, parallel=parallel
+    )
     if nll:
         if ncusts is None:
             print("WARNING: ncusts not passed")

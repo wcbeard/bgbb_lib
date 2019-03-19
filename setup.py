@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "lifetimes==0.9",
-        "numba",
+        "numba==0.42.0",
         "scipy",
         "pandas",
         "numpy",

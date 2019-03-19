@@ -37,11 +37,13 @@ class BGBB(BetaGeoBetaBinomFitter):
 
     @classmethod
     def _negative_log_likelihood(
-        kls, params, frequency, recency, n, n_custs, penalizer_coef=0
+        cls, params, frequency, recency, n, n_custs, penalizer_coef=0
     ):
         penalizer_term = penalizer_coef * sum(np.asarray(params) ** 2)
         return (
-            -np.mean(kls._loglikelihood(params, frequency, recency, n) * n_custs)
+            -np.mean(
+                cls._loglikelihood(params, frequency, recency, n) * n_custs
+            )
             + penalizer_term
         )
 
@@ -81,11 +83,11 @@ class BGBB(BetaGeoBetaBinomFitter):
         return exp(p1 + p2) / exp(p3)
 
     @classmethod
-    def cond_prob_alive_nb(kls, frequency, recency, n, params, n_days_later=0):
+    def cond_prob_alive_nb(cls, frequency, recency, n, params, n_days_later=0):
         "Numba Version"
         x, tx = frequency, recency
-        xa, txa, na = map(as_array, [x, tx, n])
-        p3 = kls._loglikelihood(params, x, tx, n)
+        xa, _, na = map(as_array, [x, tx, n])
+        p3 = cls._loglikelihood(params, x, tx, n)
 
         return p_alive_exp_p1_p2(params, xa, na, n_days_later, p3)
 
@@ -95,7 +97,11 @@ class BGBB(BetaGeoBetaBinomFitter):
 
         p1 = 1 / exp(self._loglikelihood(params, x, tx, n))
         p2 = exp(betaln(alpha + x + 1, beta + n - x) - betaln(alpha, beta))
-        p3 = delta / (gamma - 1) * exp(gammaln(gamma + delta) - gammaln(1 + delta))
+        p3 = (
+            delta
+            / (gamma - 1)
+            * exp(gammaln(gamma + delta) - gammaln(1 + delta))
+        )
         p4 = exp(gammaln(1 + delta + n) - gammaln(gamma + delta + n))
         p5 = exp(gammaln(1 + delta + n + t) - gammaln(gamma + delta + n + t))
 
