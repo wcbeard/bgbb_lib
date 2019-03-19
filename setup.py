@@ -10,6 +10,7 @@ setup(
         "scipy",
         "pandas",
         "numpy",
+        "pyarrow",
         "pyspark",
     ],
     license=["Apache 2.0", "MIT"],
