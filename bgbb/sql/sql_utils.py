@@ -84,6 +84,7 @@ base_query = """
 with cid_day as (
     SELECT
         C.client_id
+        , C.sample_id
         , C.submission_date_s3
         , from_unixtime(unix_timestamp(C.submission_date_s3, 'yyyyMMdd'),
                         'yyyy-MM-dd') AS sub_date
@@ -99,6 +100,7 @@ with cid_day as (
 , cid_model as (
     SELECT
         C.client_id
+        , C.sample_id
         , MIN(C.sub_date) AS Min_day
         , MAX(C.sub_date) AS Max_day
         , COUNT(*) AS X
@@ -106,7 +108,7 @@ with cid_day as (
     WHERE
       C.submission_date_s3 >= '{model_start_date_str}'
       AND C.submission_date_s3 < '{ho_start_date_str}'
-    GROUP BY 1
+    GROUP BY 1, 2
 )
 
 , cid_holdout as (
@@ -123,6 +125,7 @@ with cid_day as (
 , rec_freq as (
     SELECT
         C.client_id
+        , C.sample_id
         , datediff(C.Max_day, Min_day) AS Recency
         , X - 1 AS Frequency
         -- N: # opportunities to return
@@ -144,6 +147,7 @@ SELECT * FROM {qname}
 """
 
 
+# TODO: test both holdout=True and False
 def mk_rec_freq_q(
     q=None,
     holdout=False,
