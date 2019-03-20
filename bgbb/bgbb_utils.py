@@ -3,10 +3,7 @@ from itertools import count
 from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
-
-# sim_dat = gen_buy_die(n_opps, n_users, abgd=SimPars.lst, p_th=[pp, th])
 import numpy.random as nr
-
 from numba import njit
 from pandas import DataFrame
 
@@ -16,7 +13,7 @@ Prob = float
 ###############
 # Simulations #
 ###############
-def _gen_probs(abgd: List[float], n=10):
+def gen_probs(abgd: List[float], n=10):
     pa, pb, ta, tb = abgd
     p = nr.beta(pa, pb, size=n)
     th = nr.beta(ta, tb, size=n)
@@ -32,12 +29,14 @@ def gen_buy_die(
     seed=0,
 ):
     """
+    Given `n_opps` window size of opportunity, simulate Buy 'Til You Die process
+    for `n_users` users.
+    If arrays for latent variables p_th = (p, theta) are not passed, then these
+    are drawn from beta distribution.
     """
     nr.seed(seed)
     if p_th is None:
-        raise NotImplementedError
-        # to dict
-        p, th = _gen_probs(abgd, n=n_users)
+        p, th = gen_probs(abgd, n=n_users)
     else:
         p, th = p_th
     txs, xs = np.empty_like(p, dtype=np.int), np.empty_like(p, dtype=np.int)
