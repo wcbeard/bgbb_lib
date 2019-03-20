@@ -3,7 +3,7 @@ import scipy.stats as st
 from lifetimes.datasets import load_donations
 from pytest import fixture
 
-from bgbb.bgbb_utils import gen_buy_die
+from bgbb.bgbb_utils import gen_buy_die, AbgdParams
 from bgbb.core import BGBB
 from bgbb.wrappers import unload
 
@@ -106,3 +106,18 @@ def test_gen_buy_die():
     )
     recovered_params = np.array(list(bg.params_.values()))
     assert (recovered_params.round() == abgd).all()
+
+
+def test_AbgdParams():
+    """
+    Test repr, __init__, mod_param, from_dct functionality
+    of AbgdParams.
+    """
+    pars = AbgdParams(7, 3, 2, 8)
+    assert repr(pars) == "BGBB Hyperparams <α: 7.0, β: 3.0, γ: 2.0, δ: 8.0>"
+
+    pars2 = pars.mod_param(a=lambda x: x + 1, d=lambda x: x / 2)
+    assert pars.d == pars2.d * 2
+    assert pars.a == pars2.a - 1
+
+    assert AbgdParams.from_dct(pars._asdict()) == pars

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from itertools import count
 from typing import List, Optional, Sequence, Tuple
 
@@ -69,51 +69,29 @@ def get_x_tx(buys, dies) -> Tuple[int, int]:
     return x, tx
 
 
-class AbgdParams:
-    def __init__(self, a, b, g, d):
-        self.dct = OrderedDict(zip("abgd", [a, b, g, d]))
+_AbgdParams = namedtuple("AbgdParams", ["a", "b", "g", "d"])
 
-    @classmethod
-    def from_lst(cls, abgd):
-        return cls(*abgd)
+
+class AbgdParams(_AbgdParams):
+    def mod_param(self, **par_fns):
+        dct = self._asdict().copy()
+        for par_letter, f in par_fns.items():
+            dct[par_letter] = f(dct[par_letter])
+        return self.from_dct(dct)
+
+    @property
+    def greek_dct(self):
+        dct = self._asdict().copy()
+        for name, letter in zip(["α", "β", "γ", "δ"], "abgd"):
+            dct[name] = dct.pop(letter)
+        return dct
 
     @classmethod
     def from_dct(cls, dct):
         return cls(*[dct[k] for k in "abgd"])
 
-    @property
-    def lst(self):
-        return [self.dct[k] for k in "abgd"]
-
-    @property
-    def named_dct(self):
-        dct = self.dct.copy()
-        for name, letter in zip(["alpha", "beta", "gamma", "delta"], "abgd"):
-            dct[name] = dct.pop(letter)
-        return dct
-
-    @property
-    def greek_dct(self):
-        dct = self.dct.copy()
-        for name, letter in zip(["α", "β", "γ", "δ"], "abgd"):
-            dct[name] = dct.pop(letter)
-        return dct
-
-    l = lst
-    n = named_dct
-
-    @property
-    def to_dict(self):
-        return self.dct
-
-    def mod_param(self, **par_fns):
-        dct = self.dct.copy()
-        for par_letter, f in par_fns.items():
-            dct[par_letter] = f(dct[par_letter])
-        return self.from_dct(dct)
-
     def __repr__(self):
         st_repr = ", ".join(
-            "{}: {:.2f}".format(k, v) for k, v in self.greek_dct.items()
+            "{}: {:.1f}".format(k, v) for k, v in self.greek_dct.items()
         )
         return "BGBB Hyperparams <{}>".format(st_repr)
