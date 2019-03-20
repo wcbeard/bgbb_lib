@@ -69,6 +69,19 @@ def test_expec_p_th(bg):
     sim_expec_p_th_diffs(bg, abgd=[70.0, 30.0, 25.0, 75.0], seed=0)
 
 
+def test_latent_variable_mean(bg):
+    abgd = [25.0, 75.0, 70.0, 30.0]
+    p_actual, th_actual, p_est, th_est, df = gen_samps_exp(
+        bg, abgd, n_opps=90, n_users=10000, seed=0
+    )
+    bg2 = BGBB(params=abgd)
+    p_est2, th_est2 = bg2.latent_variable_mean(
+        df.frequency, df.recency, df.n_opps
+    )
+    assert np.allclose(p_est, p_est2)
+    assert np.allclose(th_est, th_est2)
+
+
 def beta_exp(a, b):
     """
     Expected value of beta distro

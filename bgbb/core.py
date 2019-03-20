@@ -136,10 +136,12 @@ class BGBB(BetaGeoBetaBinomFitter):
         lp_exp, lth_exp = cls._log_expec_p_th(a, b, g, d, f, r, n)
         return np.exp(lp_exp), np.exp(lth_exp)
 
-    def latent_variable_mean(self, f, r, n) -> Tuple[Sequence[Prob], Sequence[Prob]]:
+    def latent_variable_mean(
+        self, f, r, n
+    ) -> Tuple[Sequence[Prob], Sequence[Prob]]:
         """
         Expected values of users' latent transaction and dropout probabilities
         eqns (13), (14) from "Customer-Base Analysis in a Discrete-Time Noncontractual Setting,"
         Fader 2009.
         """
-        return self._expec_p_th(*self.Params.lst, f, r, n)
+        return self._expec_p_th(*self.Params, f, r, n)
