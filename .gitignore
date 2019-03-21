@@ -6,3 +6,9 @@ dist/
 __pycache__/
 .mypy_cache/
 bin/
+
+local notes.md
+env*.yml
+
+boot_utes.py
+tests/*.ipynb

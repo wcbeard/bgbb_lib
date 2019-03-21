@@ -33,7 +33,9 @@ def frt(f):
     return wrapper
 
 
-def to_abgd_od(params) -> Dict[str, float]:
+def to_abgd_od(
+    params: Union["OrderedDict[str, float]", List[float]]
+) -> "OrderedDict[str, float]":
     if isinstance(params, OrderedDict):
         return params
     return OrderedDict(zip(abgd_names, params))
@@ -50,7 +52,9 @@ class Rfn:
     def __init__(self, mod):
         self.mod = mod
 
-    def cond_prob_alive(self, df, params: List[float] = None, n_days_later=0, nb=True):
+    def cond_prob_alive(
+        self, df, params: List[float] = None, n_days_later=0, nb=True
+    ):
         params = module_parameter_list(params, self.mod)
         frequency, recency, n = unload(df, "frequency recency n")
         kw = dict(
@@ -75,12 +79,14 @@ class Rfn:
         return self.mod.fit(frequency, recency, n, n_custs, **kw)
 
     @wraps(BetaGeoBetaBinomFitter._loglikelihood)
-    def _loglikelihood(self, df, params=None, para=True):
+    def _loglikelihood(self, df, params=None, parallel=True):
         x, tx, T = unload(df, "frequency recency n")
         params = module_parameter_list(params, self.mod)
-        return self.mod._loglikelihood(params, x, tx, T, para=para)
+        return self.mod._loglikelihood(params, x, tx, T, parallel=parallel)
 
-    @wraps(BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time)
+    @wraps(
+        BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time
+    )
     def cond_exp_rets_till(self, df, n_days_later, params=None, nb=False):
         x, tx, n = unload(df, "frequency recency n")
         params = module_parameter_list(params, self.mod)
