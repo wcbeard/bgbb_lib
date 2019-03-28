@@ -92,7 +92,27 @@ python -c "import bgbb; print(bgbb)"
 python -c "from bgbb import bgbb"
 ```
 
+# Databricks runtime restrictions
+
+## 5.2 ML (Beta)
+- python: 3.6.5
+- spark_version: "5.2.x-cpu-ml-scala2.11"
+    - this string breaks mozetl-databricks.py
+- llvmlite: 0.23.1
+    - pip can't uninstall this lib on Databricks
+- numba: 0.38.0+0.g2a2b772fc.dirty
+- https://docs.databricks.com/release-notes/runtime/5.2ml.html
+
+## 5.2
+- this library is currently configured to use this runtime version
+- python: 3.5.2 (typing bug)
+- spark_version: "4.3.x-scala2.11"
+- llvmlite: 0.13.0
+- numba: 0.28.1
+    - `prange` not included until [0.34](https://numba.pydata.org/numba-doc/dev/release-notes.html#version-0-34-0)
+- https://docs.databricks.com/release-notes/runtime/5.2.html
+
 # License
 Licensed under either
- - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)) or 
+ - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)) or
  - MIT license ([LICENSE-MIT](LICENSE-MIT))

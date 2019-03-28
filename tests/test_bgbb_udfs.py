@@ -1,11 +1,16 @@
 import numpy as np
+from bgbb import BGBB
+from bgbb.sql.bgbb_udfs import (
+    add_p_th,
+    mk_n_returns_udf,
+    mk_p_alive_udf,
+    mk_p_th_exp_udf,
+)
+from bgbb.wrappers import to_abgd_od
 from lifetimes.datasets import load_donations
 from lifetimes.fitters.beta_geo_beta_binom_fitter import BetaGeoBetaBinomFitter
+from pandas import DataFrame
 from pytest import fixture
-
-from bgbb import BGBB
-from bgbb.sql.bgbb_udfs import mk_n_returns_udf, mk_p_alive_udf
-from bgbb.wrappers import to_abgd_od
 
 df = fixture(load_donations)
 
@@ -43,6 +48,11 @@ def n_returns(bgbb, params):
     return mk_n_returns_udf(bgbb, params=params, return_in_next_n_days=14)
 
 
+@fixture
+def p_th_est_udfs(bgbb, params):
+    return mk_p_th_exp_udf(bgbb, params=params)
+
+
 def test_p_alive(dfs, p_alive, ref_model):
     pa_ref = ref_model.conditional_probability_alive(0)
 
@@ -61,3 +71,55 @@ def test_n_returns(dfs, n_returns, ref_model):
     ).toPandas()
 
     assert np.allclose(df2.P14, p14_ref)
+
+
+def test_p_th_est_udf(dfs, p_th_est_udfs):
+    """Just test structure and support of this function, since lifetimes
+    doesn't have this function.
+    """
+    p_th_est, _, _ = p_th_est_udfs
+    df = dfs.withColumn(
+        "p_th", p_th_est(dfs.frequency, dfs.recency, dfs.n)
+    ).toPandas()
+    p_th_srs = df["p_th"]
+    p, th = zip(*p_th_srs)
+    p_th_df = DataFrame(dict(p=p, th=th))
+    assert p_th_df.eval(
+        "0 <= p <= 1 & 0 <= th <= 1"
+    ).all(), "This function returns probabilities"
+
+
+def test_add_p_th(dfs, bgbb, params):
+    """
+    Check that, given same # opportunities to return,
+    higher frequency yields higher estimates of p.
+    Also check that columns are as expected, and estimated
+    probabilities are between [0, 1].
+    """
+    p_th_df = add_p_th(
+        bgbb, dfs=dfs, params=params, fcol="frequency", rcol="Recency", ncol="N"
+    ).toPandas()
+    max_opp = p_th_df.n.min()  # noqa: F841
+    mean_p_freq = (
+        p_th_df.query("n == @max_opp & frequency > 0")
+        .groupby("frequency")
+        .p.mean()
+    )
+    # Looks something like:
+    # frequency
+    # 1    0.383420
+    # 2    0.510549
+    # 3    0.619845
+    # 4    ...
+    assert (
+        mean_p_freq.is_monotonic_increasing
+    ), "As frequency increases, p should as well"
+    assert set(p_th_df) == {"frequency", "recency", "n", "n_custs", "p", "th"}
+    assert p_th_df.eval(
+        "0 <= p <= 1 & 0 <= th <= 1"
+    ).all(), "This function returns probabilities"
+
+    none_params = add_p_th(
+        bgbb, dfs=dfs, params=None, fcol="frequency", rcol="Recency", ncol="N"
+    ).toPandas()
+    return none_params

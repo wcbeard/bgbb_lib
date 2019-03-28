@@ -33,9 +33,8 @@ def frt(f):
     return wrapper
 
 
-def to_abgd_od(
-    params: Union["OrderedDict[str, float]", List[float]]
-) -> "OrderedDict[str, float]":
+def to_abgd_od(params):
+    # type: (Union["OrderedDict[str, float]", List[float]]) -> OrderedDict[str, float]
     if isinstance(params, OrderedDict):
         return params
     return OrderedDict(zip(abgd_names, params))
