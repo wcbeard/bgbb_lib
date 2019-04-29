@@ -9,12 +9,6 @@ from lifetimes import BetaGeoBetaBinomFitter
 abgd_names = "alpha beta gamma delta".split()
 
 
-def unload(dct: Dict, ks: Union[List[str], str]) -> List[float]:
-    if isinstance(ks, str):
-        ks = ks.split()
-    return [dct[k] for k in ks]
-
-
 def frt(f):
     """Wraps lifetimes model methods that potentially
     take 'frequency', 'recency', 'T' as params,

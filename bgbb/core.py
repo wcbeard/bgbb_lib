@@ -1,24 +1,16 @@
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
-import pandas as pd
 from lifetimes import BetaGeoBetaBinomFitter
 from numpy import exp
 from scipy.special import betaln, gammaln
 
 from bgbb.bgbb_likelihood import nb_loglikelihood
-from bgbb.bgbb_utils import AbgdParams
+from bgbb.bgbb_utils import AbgdParams, as_array
 from bgbb.numba_special import cond_exp_rets_till_p2345, p_alive_exp_p1_p2
 from bgbb.wrappers import Rfn, frt, to_abgd_od
 
 Prob = float  # float: [0, 1]
-
-
-def as_array(s: Union[np.array, pd.Series]):
-    try:
-        return s.values
-    except AttributeError:
-        return s
 
 
 class BGBB(BetaGeoBetaBinomFitter):

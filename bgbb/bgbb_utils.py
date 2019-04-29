@@ -1,13 +1,27 @@
 from collections import OrderedDict, namedtuple
 from itertools import count
-from typing import List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.random as nr
 from numba import njit
+import pandas as pd
 from pandas import DataFrame
 
 Prob = float
+
+
+def as_array(s: Union[np.array, pd.Series]):
+    try:
+        return s.values
+    except AttributeError:
+        return s
+
+
+def unload(dct: Dict, ks: Union[List[str], str]) -> List[float]:
+    if isinstance(ks, str):
+        ks = ks.split()
+    return [dct[k] for k in ks]
 
 
 ###############
