@@ -94,7 +94,7 @@ class AbgdParams(_AbgdParams):
         return self.from_dct(dct)
 
     @property
-    def greek_dct(self):
+    def _greek_dct_unicode(self):
         dct = self._asdict().copy()
         for name, letter in zip(["α", "β", "γ", "δ"], "abgd"):
             dct[name] = dct.pop(letter)
@@ -104,8 +104,12 @@ class AbgdParams(_AbgdParams):
     def from_dct(cls, dct):
         return cls(*[dct[k] for k in "abgd"])
 
+    @classmethod
+    def from_greek_dct(cls, dct):
+        return cls(*[dct[k] for k in ("alpha", "beta", "gamma", "delta")])
+
     def __repr__(self):
         st_repr = ", ".join(
-            "{}: {:.1f}".format(k, v) for k, v in self.greek_dct.items()
+            "{}: {:.1f}".format(k, v) for k, v in self._greek_dct_unicode.items()
         )
         return "BGBB Hyperparams <{}>".format(st_repr)
