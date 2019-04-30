@@ -143,7 +143,6 @@ class BGBB(BetaGeoBetaBinomFitter):
         """
         # Nomenclature of the paper: x, tx, n
         x, tx = f, r
-        del r, f
         x, tx, n = map(as_array, [x, tx, n])
         a, b, g, d = abgd
         cll = cls._loglikelihood(abgd, x, tx, n)
