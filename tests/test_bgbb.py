@@ -9,7 +9,14 @@ from bgbb.wrappers import unload
 
 df = fixture(load_donations)
 bg = fixture(lambda: BGBB(params=[1.20, 0.75, 0.66, 2.78]))
+bgdat = fixture(lambda: BGBB(params=[1.20, 0.75, 0.66, 2.78], data=load_donations()))
 pars = fixture(lambda: [1.20, 0.75, 0.66, 2.78])
+
+
+def check_prob(p):
+    # Round for weird floating point issues
+    p = p.round(10)
+    return all(p >= 0) and all(p <= 1)
 
 
 def test_len(df):
@@ -69,15 +76,48 @@ def test_expec_p_th(bg):
     sim_expec_p_th_diffs(bg, abgd=[70.0, 30.0, 25.0, 75.0], seed=0)
 
 
+def test_p_interval(bgdat):
+    p0n1 = bgdat.rfn.p_x_interval(n_star=1, x_star=0)
+    p0n2 = bgdat.rfn.p_x_interval(n_star=2, x_star=0)
+
+    assert check_prob(p0n1)
+    assert check_prob(p0n2)
+
+    p_any_n1 = 1 - p0n1
+    p_any_n2 = 1 - p0n2
+    assert (p_any_n2 > p_any_n1).all()
+
+
+def test_p_interval_close_p_alive(bgdat, df):
+    """
+    The threshold for this test is somewhat arbitrary,
+    but should check that P(ever return in a long interval)
+    is a close approximation of P(alive).
+    """
+
+    p_alive = bgdat.rfn.cond_prob_alive(df)
+
+    p_never_return = bgdat.rfn.p_x_interval(n_star=100, x_star=0)
+    p_ever_return = 1 - p_never_return
+
+    assert check_prob(p_alive)
+    assert check_prob(p_never_return)
+    assert check_prob(p_ever_return)
+
+    assert np.corrcoef(p_alive, p_ever_return)[0, 1] > .99
+
+    # Test case for x_star != 0
+    p_return_once = bgdat.rfn.p_x_interval(n_star=100, x_star=1)
+    assert check_prob(p_return_once)
+
+
 def test_latent_variable_mean(bg):
     abgd = [25.0, 75.0, 70.0, 30.0]
     p_actual, th_actual, p_est, th_est, df = gen_samps_exp(
         bg, abgd, n_opps=90, n_users=10000, seed=0
     )
     bg2 = BGBB(params=abgd)
-    p_est2, th_est2 = bg2.latent_variable_mean(
-        df.frequency, df.recency, df.n_opps
-    )
+    p_est2, th_est2 = bg2.latent_variable_mean(df.frequency, df.recency, df.n_opps)
     assert np.allclose(p_est, p_est2)
     assert np.allclose(th_est, th_est2)
 
@@ -114,9 +154,7 @@ def test_gen_buy_die():
         .rename(columns={0: "weights"})
     )
 
-    bg = BGBB(penalizer_coef=0.0).rfn.fit(
-        rfn_df.rename(columns={"weights": "n_custs"})
-    )
+    bg = BGBB(penalizer_coef=0.0).rfn.fit(rfn_df.rename(columns={"weights": "n_custs"}))
     recovered_params = np.array(list(bg.params_.values()))
     assert (recovered_params.round() == abgd).all()
 

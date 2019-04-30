@@ -1,24 +1,17 @@
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
-import pandas as pd
 from lifetimes import BetaGeoBetaBinomFitter
-from numpy import exp
-from scipy.special import betaln, gammaln
+from numpy import exp, log
+from scipy.special import betaln, binom, gammaln
+
 
 from bgbb.bgbb_likelihood import nb_loglikelihood
-from bgbb.bgbb_utils import AbgdParams
-from bgbb.numba_special import cond_exp_rets_till_p2345, p_alive_exp_p1_p2
+from bgbb.bgbb_utils import AbgdParams, as_array
+from bgbb.numba_special import cond_exp_rets_till_p2345, p_alive_exp_p1_p2, nb_lbeta, nb_lbeta_vec12, nb_lbeta_vec2
 from bgbb.wrappers import Rfn, frt, to_abgd_od
 
 Prob = float  # float: [0, 1]
-
-
-def as_array(s: Union[np.array, pd.Series]):
-    try:
-        return s.values
-    except AttributeError:
-        return s
 
 
 class BGBB(BetaGeoBetaBinomFitter):
@@ -47,9 +40,7 @@ class BGBB(BetaGeoBetaBinomFitter):
     ):
         penalizer_term = penalizer_coef * sum(np.asarray(params) ** 2)
         return (
-            -np.mean(
-                cls._loglikelihood(params, frequency, recency, n) * n_custs
-            )
+            -np.mean(cls._loglikelihood(params, frequency, recency, n) * n_custs)
             + penalizer_term
         )
 
@@ -103,11 +94,7 @@ class BGBB(BetaGeoBetaBinomFitter):
 
         p1 = 1 / exp(self._loglikelihood(params, x, tx, n))
         p2 = exp(betaln(alpha + x + 1, beta + n - x) - betaln(alpha, beta))
-        p3 = (
-            delta
-            / (gamma - 1)
-            * exp(gammaln(gamma + delta) - gammaln(1 + delta))
-        )
+        p3 = delta / (gamma - 1) * exp(gammaln(gamma + delta) - gammaln(1 + delta))
         p4 = exp(gammaln(1 + delta + n) - gammaln(gamma + delta + n))
         p5 = exp(gammaln(1 + delta + n + t) - gammaln(gamma + delta + n + t))
 
@@ -136,12 +123,94 @@ class BGBB(BetaGeoBetaBinomFitter):
         lp_exp, lth_exp = cls._log_expec_p_th(a, b, g, d, f, r, n)
         return np.exp(lp_exp), np.exp(lth_exp)
 
-    def latent_variable_mean(
-        self, f, r, n
-    ) -> Tuple[Sequence[Prob], Sequence[Prob]]:
+    def latent_variable_mean(self, f, r, n) -> Tuple[Sequence[Prob], Sequence[Prob]]:
         """
         Expected values of users' latent transaction and dropout probabilities
         eqns (13), (14) from "Customer-Base Analysis in a Discrete-Time Noncontractual Setting,"
         Fader 2009.
         """
         return self._expec_p_th(*self.Params, f, r, n)
+
+    @classmethod
+    def p_x_interval(cls, abgd, f, r, n, n_star, x_star, ret_log=False):
+        """
+        Implements the probability that a customer with purchase history (x, tx, n)
+        makes x* transactions in the interval (n, n + n*],
+        AKA Equation (11) from "Customer-Base Analysis in a Discrete-Time
+        Noncontractual Setting," Fader 2009.
+        You can get the probability that a user will *ever* return by computing
+        this quantity for x_star == 0, and then subtracting it from 1.
+        """
+        # Nomenclature of the paper: x, tx, n
+        x, tx = f, r
+        x, tx, n = map(as_array, [x, tx, n])
+        a, b, g, d = abgd
+        cll = cls._loglikelihood(abgd, x, tx, n)
+        lbab = nb_lbeta(a, b)
+        lbgd = nb_lbeta(g, d)
+
+        def mk_c2b_log_sum(i_range, lbinoms_cache, x_len):
+            """
+            This is a sum of log terms, so we'll need to
+            lse them.
+            """
+            ss = np.full(x_len, -np.inf)
+            for binom_ix, i in enumerate(i_range):
+                new_log_expr = lg_c2b_i(binom_ix, i, lbinoms_cache)
+                ss = np.logaddexp(ss, new_log_expr)
+            return ss
+
+        def lg_c2b_i(binom_ix, i, lbinoms_cache):
+            """
+            This is for the 2nd part of C_2, which is a sum
+            over different values of i. This function returns
+            the expression for a given value of i.
+            """
+            lbinom = lbinoms_cache[binom_ix]
+            lbeta_terms = (
+                nb_lbeta_vec12(a + x + x_star, b + n - x + i - x_star)
+                - lbab
+                + nb_lbeta_vec2(g + 1, d + n + i)
+                - lbgd
+            )
+            return lbinom + lbeta_terms
+
+        def build_lg_t2():
+            # C2a: log(first additive term): lg_c2a
+            c2a_lbinom = log(binom(n_star, x_star))
+            c2a_lbeta_terms = (
+                nb_lbeta_vec12(a + x + x_star, b + n - x + n_star - x_star)
+                - lbab
+                + nb_lbeta_vec2(g, d + n + n_star)
+                - lbgd
+            )
+            lg_c2a = c2a_lbinom + c2a_lbeta_terms
+
+            # C2b: big sum of junk
+            i_range = np.arange(x_star, n_star)
+            lbinoms_cache = np.array([np.log(binom(i, x_star)) for i in i_range])
+            lg_c2b = mk_c2b_log_sum(i_range, lbinoms_cache, len(lg_c2a))
+
+            return np.logaddexp(lg_c2a, lg_c2b) - cll
+
+        lg_t2 = build_lg_t2()
+
+        if x_star == 0:
+            # C1
+            lg_c1_ll = (
+                nb_lbeta_vec12(a + x, b + n - x)
+                - lbab
+                + nb_lbeta_vec2(g, d + n)
+                - lbgd - cll
+            )
+            t1 = 1 - exp(lg_c1_ll)
+            p = t1 + exp(lg_t2)
+            if ret_log:
+                return log(p)
+            return p
+
+        # Only include 1st term if x_star == 0
+        log_p = lg_t2
+        if ret_log:
+            return log_p
+        return exp(log_p)

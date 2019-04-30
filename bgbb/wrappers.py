@@ -1,18 +1,15 @@
+import inspect
 from collections import OrderedDict
 from functools import wraps
-import inspect
-from typing import Dict, Union, List
-import numpy as np
+from typing import List
 
 from lifetimes import BetaGeoBetaBinomFitter
+import numpy as np
+
+from bgbb.bgbb_utils import unload, as_array
+
 
 abgd_names = "alpha beta gamma delta".split()
-
-
-def unload(dct: Dict, ks: Union[List[str], str]) -> List[float]:
-    if isinstance(ks, str):
-        ks = ks.split()
-    return [dct[k] for k in ks]
 
 
 def frt(f):
@@ -40,21 +37,23 @@ def to_abgd_od(params):
     return OrderedDict(zip(abgd_names, params))
 
 
-def module_parameter_list(params, mod):
+def model_parameter_list(params, mod):
     return params or list(mod.params_.values())
 
 
 class Rfn:
-    """TODO: document
+    """
+    Wrapper for the BetaGeoBetaBinomFitter model. Instead of having to
+    pass each of the r/f/n data and the a/b/g/d parameters, the corresponding
+    wrapper functions here try to extract these columns from the model's
+    attached dataframe, assuming it has columns "frequency", "recency", and "n".
     """
 
     def __init__(self, mod):
         self.mod = mod
 
-    def cond_prob_alive(
-        self, df, params: List[float] = None, n_days_later=0, nb=True
-    ):
-        params = module_parameter_list(params, self.mod)
+    def cond_prob_alive(self, df, params: List[float] = None, n_days_later=0, nb=True):
+        params = model_parameter_list(params, self.mod)
         frequency, recency, n = unload(df, "frequency recency n")
         kw = dict(
             frequency=frequency,
@@ -80,16 +79,23 @@ class Rfn:
     @wraps(BetaGeoBetaBinomFitter._loglikelihood)
     def _loglikelihood(self, df, params=None, parallel=True):
         x, tx, T = unload(df, "frequency recency n")
-        params = module_parameter_list(params, self.mod)
+        params = model_parameter_list(params, self.mod)
         return self.mod._loglikelihood(params, x, tx, T, parallel=parallel)
 
-    @wraps(
-        BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time
-    )
+    @wraps(BetaGeoBetaBinomFitter.conditional_expected_number_of_purchases_up_to_time)
     def cond_exp_rets_till(self, df, n_days_later, params=None, nb=False):
         x, tx, n = unload(df, "frequency recency n")
-        params = module_parameter_list(params, self.mod)
+        params = model_parameter_list(params, self.mod)
         kw = dict(t=n_days_later, frequency=x, recency=tx, n=n, params=params)
         if nb:
             return self.mod.cond_exp_rets_till_nb(**kw)
         return self.mod.cond_exp_rets_till(**kw)
+
+    def p_x_interval(self, n_star, x_star, ret_log=False, params=None, df=None):
+        if df is None:
+            df = self.mod.data
+        x, tx, n = unload(df, "frequency recency n")
+        params = model_parameter_list(params, self.mod)
+        return self.mod.p_x_interval(
+            params, f=x, r=tx, n=n, n_star=n_star, x_star=x_star, ret_log=ret_log
+        )
