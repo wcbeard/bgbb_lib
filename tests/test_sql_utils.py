@@ -1,9 +1,17 @@
 import datetime as dt
+from textwrap import dedent
 
 import pandas as pd
 from pytest import raises, fixture
 
-from bgbb.sql.sql_utils import to_sql_list, mk_time_params, to_samp_ids
+from bgbb.sql.sql_utils import (
+    to_sql_list,
+    mk_time_params,
+    mk_rec_freq_q,
+    to_samp_ids,
+    first_dim_select,
+    base_query,
+)
 
 mod_win1 = 90
 mod_win2 = 120
@@ -94,6 +102,64 @@ def test_ho_range(r1, r2):
 
 def test_to_samp_ids():
     assert to_samp_ids([42]) == "'42'"
-    assert to_samp_ids([]) == ''
+    assert to_samp_ids([]) == ""
     assert to_samp_ids(["42"]) == "'42'"
     assert to_samp_ids(["42", 1]) == "'42', '1'"
+
+
+def test_first_dim_select():
+    res = dedent(first_dim_select(["os", "locale"])).strip()
+    shouldbe = dedent(", first(os) as os\n, first(locale) as locale")
+    assert res == shouldbe
+
+
+def test_base_query():
+    """Show an example of what the query should look like
+    when first_dims are passed.
+    """
+    res_ = dedent(mk_rec_freq_q(
+        base_query,
+        model_start_date_str="2019-05-01",
+        ho_start_date_str="2019-06-01",
+        ho_last_date_str="2019-06-07",
+        ho_start_date="2019-06-01",
+        first_dims=["os", "locale"],
+    ))
+    res = '\n'.join(res_.splitlines()[:33]).strip()
+
+    expected_q = dedent("""
+    with cid_day as (
+        SELECT
+            C.client_id
+            , C.sample_id
+            , C.submission_date_s3
+            , from_unixtime(unix_timestamp(C.submission_date_s3, 'yyyyMMdd'),
+                            'yyyy-MM-dd') AS sub_date
+            , os, locale
+        FROM clients_daily C
+        WHERE
+            app_name = 'Firefox'
+            AND channel = 'release'
+            AND sample_id in ('1')
+    )
+
+    -- clients_daily aggregates from window *before*
+    -- the holdout date
+    , cid_model as (
+        SELECT
+            C.client_id
+            , C.sample_id
+            , MIN(C.sub_date) AS Min_day
+            , MAX(C.sub_date) AS Max_day
+            , COUNT(*) AS X
+            , first(os) as os
+            , first(locale) as locale
+        FROM cid_day C
+        WHERE
+            C.submission_date_s3 >= '2019-05-01'
+            AND C.submission_date_s3 < '2019-06-01'
+        GROUP BY 1, 2
+    )
+    """).strip()
+
+    assert res == expected_q
