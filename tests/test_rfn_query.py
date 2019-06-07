@@ -56,9 +56,14 @@ def clients_daily_df():
         columns=["client_id", "submission_date_s3"],
     )
 
-    clients_daily_df["app_name"] = "Firefox"
-    clients_daily_df["channel"] = "release"
-    clients_daily_df["sample_id"] = "1"
+    clients_daily_df = clients_daily_df.assign(
+        app_name="Firefox",
+        channel="release",
+        sample_id="1",
+        os="Linux",
+        country="IN",
+        fake_dim="fake_value",
+    )
 
     return clients_daily_df
 
@@ -69,7 +74,12 @@ def rfn_spk(clients_daily_df, spark):
 
     clients_daily_dfs.createOrReplaceTempView("clients_daily")
     rfn_dfs, _q = run_rec_freq_spk(
-        spark, ho_win=1, model_win=10, sample_ids=[1], ho_start="2018-06-11"
+        spark,
+        ho_win=1,
+        model_win=10,
+        sample_ids=[1],
+        ho_start="2018-06-11",
+        first_dims=["os", "country", "fake_dim"],
     )
     return rfn_dfs
 
@@ -139,3 +149,25 @@ def test_rfn_invariants(rfn, duration=None):
 
 def test_rec_freq_spk2pandas(rfn_spk):
     return rec_freq_spk2pandas(rfn_spk)
+
+
+def test_rfn_cols(rfn):
+    """
+    final columns should include `first_dims`:
+    os, country, and fake_dim.
+    """
+    scols = set(rfn.columns)
+    expected_cols = set(
+        [
+            "sample_id",
+            "Recency",
+            "Frequency",
+            "N",
+            "Max_day",
+            "Min_day",
+            "os",
+            "country",
+            "fake_dim",
+        ]
+    )
+    assert scols == expected_cols

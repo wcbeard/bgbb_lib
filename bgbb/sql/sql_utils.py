@@ -44,6 +44,14 @@ def to_sql_list(xs):
     return res
 
 
+def first_dim_select(dims: List[str], indent=8):
+    joiner = "\n{indent}, ".format(indent=" " * indent)
+    return "".join(
+        "{joiner}first({col}) as {col}".format(joiner=joiner, col=col)
+        for col in dims
+    )
+
+
 def insert_country(
     q, insert_before="{sample_comment}", countries: List[str] = ["GB"]
 ):
@@ -88,6 +96,7 @@ with cid_day as (
         , C.submission_date_s3
         , from_unixtime(unix_timestamp(C.submission_date_s3, 'yyyyMMdd'),
                         'yyyy-MM-dd') AS sub_date
+        {first_dims}
     FROM clients_daily C
     WHERE
         app_name = 'Firefox'
@@ -103,11 +112,11 @@ with cid_day as (
         , C.sample_id
         , MIN(C.sub_date) AS Min_day
         , MAX(C.sub_date) AS Max_day
-        , COUNT(*) AS X
+        , COUNT(*) AS X{select_first_dims}
     FROM cid_day C
     WHERE
-      C.submission_date_s3 >= '{model_start_date_str}'
-      AND C.submission_date_s3 < '{ho_start_date_str}'
+        C.submission_date_s3 >= '{model_start_date_str}'
+        AND C.submission_date_s3 < '{ho_start_date_str}'
     GROUP BY 1, 2
 )
 
@@ -132,6 +141,7 @@ with cid_day as (
         , datediff('{ho_start_date}', Min_day) - 1  AS N
         , C.Max_day
         , C.Min_day
+        {first_dims}
     FROM cid_model C
 )
 
@@ -149,18 +159,24 @@ SELECT * FROM {qname}
 
 # TODO: test both holdout=True and False
 def mk_rec_freq_q(
-    q=None,
+    q,
     holdout=False,
     model_start_date_str: str = None,
     pcd=None,
     sample_ids: List[int] = [1],
+    first_dims: List[str] = [],
     **k
 ):
     """
     holdout: pull # of returns in holdout period?
+    @first_dims: list of dimensions that should be relatively
+    stable with clients, like `os`, `channel`, etc. The query
+    will pull the first of these values for each client.
     """
     qname = "rec_freq_holdout" if holdout else "rec_freq"
     sample_ids_str = to_samp_ids(sample_ids)  # type: str
+    first_dims_alias = first_dim_select(first_dims, indent=8)
+    first_dims_agg = "".join(", " + dim for dim in first_dims)
 
     kw = dict(
         model_start_date_str=model_start_date_str,
@@ -168,6 +184,8 @@ def mk_rec_freq_q(
         sample_comment="" if sample_ids else "--",
         qname=qname,
         pcd=pcd,
+        select_first_dims=first_dims_alias,
+        first_dims=first_dims_agg,
     )
     kw.update(k)
     kw = {k: v for k, v in kw.items() if v is not None}
@@ -181,6 +199,7 @@ def run_rec_freq_spk(
     model_win=90,
     holdout=False,
     sample_ids: List[int] = [],
+    first_dims: List[str] = [],
     ho_start="2018-08-01",
     ho_days_in_future=None,
 ):
@@ -203,8 +222,8 @@ def run_rec_freq_spk(
         ho_start_date=r.ho_start_date,
         ho_last_date_str=r.ho_last_date_str,
         ho_start_date_str=r.ho_start_date_str,
+        first_dims=first_dims,
     )
-    #     print(r.q)
     dfs = spark.sql(r.q)
     return dfs, r.q
 
