@@ -108,8 +108,8 @@ def test_to_samp_ids():
 
 
 def test_first_dim_select():
-    res = dedent(first_dim_select(["os", "locale"])).strip()
-    shouldbe = dedent(", first(os) as os\n, first(locale) as locale")
+    res = first_dim_select(["os", "locale"], indent=0).strip()
+    shouldbe = ", first(os) as os\n, first(locale) as locale"
     assert res == shouldbe
 
 
