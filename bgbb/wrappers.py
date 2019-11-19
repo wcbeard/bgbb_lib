@@ -6,7 +6,7 @@ from typing import List
 from lifetimes import BetaGeoBetaBinomFitter
 import numpy as np
 
-from bgbb.bgbb_utils import unload, as_array
+from bgbb.utils import unload, as_array
 
 
 abgd_names = "alpha beta gamma delta".split()

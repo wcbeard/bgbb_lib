@@ -1,6 +1,6 @@
 import numpy as np
 from bgbb import BGBB
-from bgbb.sql.bgbb_udfs import (
+from bgbb.udfs import (
     add_mau,
     add_p_th,
     mk_n_returns_udf,

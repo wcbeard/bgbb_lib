@@ -3,7 +3,7 @@ from numba import njit, prange
 from numpy import log, exp, logaddexp
 from scipy.special import betaln
 
-from bgbb.numba_special import nb_lbeta_vec12, nb_lbeta_vec2
+from bgbb.vectorized import nb_lbeta_vec12, nb_lbeta_vec2
 
 
 def get_vals(x):
