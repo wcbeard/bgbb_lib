@@ -29,7 +29,7 @@ setup(
     install_requires=[
         "lifetimes==0.9",
         # See Readme for databricks library restrictions
-        "numba>=0.34,<=0.38",
+        "numba>=0.34",  # ,<=0.38
         "scipy<=1.2",
         "pandas==0.24",
         "numpy<=1.15",
