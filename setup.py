@@ -31,7 +31,7 @@ setup(
         # See Readme for databricks library restrictions
         "numba>=0.34,<=0.38",
         "scipy",
-        "pandas=0.24",
+        "pandas==0.24",
         "numpy",
         "pyarrow",
         "pyspark",
