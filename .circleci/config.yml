@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: python:3.6
+      - image: python:3.7-stretch
     steps:
       - checkout
       - run:
@@ -12,7 +12,7 @@ jobs:
             apt-get update
             apt-get install -y libsnappy-dev openjdk-8-jre-headless
             pip install tox
-      - run:  
+      - run:
           name: Run tests
           command: tox
 
