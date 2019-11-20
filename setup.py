@@ -32,7 +32,7 @@ setup(
         "numba>=0.34,<=0.38",
         "scipy",
         "pandas==0.24",
-        "numpy",
+        "numpy<=1.15",
         "pyarrow",
         "pyspark",
     ],
