@@ -38,5 +38,5 @@ setup(
     ],
     license=["Apache 2.0", "MIT"],
     extras_require={"test": ["pytest"]},
-    classifiers=["Programming Language :: Python :: 3.5"],
+    classifiers=["Programming Language :: Python :: 3.7"],
 )
