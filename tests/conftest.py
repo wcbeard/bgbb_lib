@@ -2,16 +2,16 @@
 Most of this stuff from
 https://github.com/mozilla/python_mozetl/blob/master/tests/conftest.py
 """
-import pyspark
+from pyspark.sql import SparkSession
+
 import pytest
 from pytest import fixture
 
 
-@fixture
+@fixture(scope="session")
 def spark():
-    spark = pyspark.sql.SparkSession.builder.appName("test").getOrCreate()
+    spark = SparkSession.builder.appName("test").getOrCreate()
     yield spark
-    spark.stop()
 
 
 class DataFrameFactory:
