@@ -11,6 +11,7 @@ from pytest import fixture
 @fixture(scope="session")
 def spark():
     spark = SparkSession.builder.appName("test").getOrCreate()
+    spark.conf.set("spark.sql.execution.arrow.enabled", "true")
     yield spark
 
 
