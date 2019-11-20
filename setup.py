@@ -1,4 +1,5 @@
 import re
+
 from setuptools import find_packages, setup
 
 
@@ -30,7 +31,7 @@ setup(
         # See Readme for databricks library restrictions
         "numba>=0.34,<=0.38",
         "scipy",
-        "pandas",
+        "pandas=0.24",
         "numpy",
         "pyarrow",
         "pyspark",
