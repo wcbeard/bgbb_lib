@@ -30,13 +30,13 @@ setup(
         "lifetimes==0.9",
         # See Readme for databricks library restrictions
         "numba>=0.34,<=0.38",
-        "scipy",
+        "scipy<=1.2",
         "pandas==0.24",
         "numpy<=1.15",
-        "pyarrow",
+        "pyarrow<=0.13",
         "pyspark",
     ],
     license=["Apache 2.0", "MIT"],
     extras_require={"test": ["pytest"]},
-    classifiers=["Programming Language :: Python :: 3.7"],
+    classifiers=["Programming Language :: Python :: 3.6"],
 )
