@@ -1,5 +1,5 @@
 import numpy as np
-from bgbb.bgbb_likelihood import nb_loglikelihood
+from bgbb.likelihood import nb_loglikelihood
 
 
 def test_nb_loglikelihood():

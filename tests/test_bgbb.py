@@ -3,7 +3,7 @@ import scipy.stats as st
 from lifetimes.datasets import load_donations
 from pytest import fixture
 
-from bgbb.bgbb_utils import gen_buy_die, AbgdParams
+from bgbb.utils import gen_buy_die, AbgdParams
 from bgbb.core import BGBB
 from bgbb.wrappers import unload
 

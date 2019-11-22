@@ -1,7 +1,12 @@
+"""
+Given number of days to predict returns in the future (`return_in_next_n_days`) and number of days
+in the future to predict if users are still active (`alive_n_days_later`), create vectorized spark
+UDFs that use BGBB functionality to compute retention quantities.
+"""
 from typing import Optional
 
 from bgbb import BGBB
-from bgbb.bgbb_utils import AbgdParams
+from bgbb.utils import AbgdParams
 from pandas import Series
 from pyspark.sql.functions import PandasUDFType, pandas_udf, col as C
 

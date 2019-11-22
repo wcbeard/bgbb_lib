@@ -6,9 +6,9 @@ from numpy import exp, log
 from scipy.special import betaln, binom, gammaln
 
 
-from bgbb.bgbb_likelihood import nb_loglikelihood
-from bgbb.bgbb_utils import AbgdParams, as_array
-from bgbb.numba_special import cond_exp_rets_till_p2345, p_alive_exp_p1_p2, nb_lbeta, nb_lbeta_vec12, nb_lbeta_vec2
+from bgbb.likelihood import nb_loglikelihood
+from bgbb.utils import AbgdParams, as_array
+from bgbb.vectorized import cond_exp_rets_till_p2345, p_alive_exp_p1_p2, nb_lbeta, nb_lbeta_vec12, nb_lbeta_vec2
 from bgbb.wrappers import Rfn, frt, to_abgd_od
 
 Prob = float  # float: [0, 1]
