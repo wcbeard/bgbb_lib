@@ -33,7 +33,7 @@ setup(
         "pandas",
         "numpy",
         "pyarrow==0.14.1", # https://issues.apache.org/jira/browse/SPARK-29367
-        "pyspark==2.4.4",
+        "pyspark==3.2.2",
     ],
     license=["Apache 2.0", "MIT"],
     extras_require={"test": ["pytest"]},
