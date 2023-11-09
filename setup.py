@@ -32,7 +32,7 @@ setup(
         "scipy",
         "pandas",
         "numpy",
-        "pyarrow==0.14.1", # https://issues.apache.org/jira/browse/SPARK-29367
+        "pyarrow==14.0.1", # https://issues.apache.org/jira/browse/SPARK-29367
         "pyspark==2.4.4",
     ],
     license=["Apache 2.0", "MIT"],
